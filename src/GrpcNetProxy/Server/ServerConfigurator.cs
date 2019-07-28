@@ -83,5 +83,16 @@ namespace GrpcNetProxy.Server
             return this;
         }
 
+        /// <summary>
+        /// Set configuration name
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public ServerConfigurator SetName(string name)
+        {
+            Configuration.Name = name;
+            return this;
+        }
+
     }
 }

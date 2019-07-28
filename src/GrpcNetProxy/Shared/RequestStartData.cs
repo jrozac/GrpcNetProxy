@@ -17,6 +17,11 @@
         public string MethodName { get; set; }
 
         /// <summary>
+        /// Host name
+        /// </summary>
+        public string HostName { get; set; }
+
+        /// <summary>
         /// Request
         /// </summary>
         public object Request { get; set; }

@@ -7,7 +7,7 @@ namespace GrpcNetProxy.Client
     /// <summary>
     /// Grpc channels manager
     /// </summary>
-    public abstract class GrpcChannelManager
+    public class GrpcChannelManager
     {
 
         /// <summary>
@@ -26,11 +26,18 @@ namespace GrpcNetProxy.Client
         private readonly List<DefaultCallInvoker> _invokers = new List<DefaultCallInvoker>();
 
         /// <summary>
+        /// Manager name
+        /// </summary>
+        public string Name { get; private set; }
+
+        /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="hosts"></param>
-        internal GrpcChannelManager(GrpcChannelManagerConfiguration configuration)
+        /// <param name="name"></param>
+        /// <param name="configuration"></param>
+        internal GrpcChannelManager(string name, GrpcChannelManagerConfiguration configuration)
         {
+            Name = name;
             _configuration = configuration;
             Init();
         }
@@ -64,21 +71,6 @@ namespace GrpcNetProxy.Client
                 Options = _configuration.ChannelsOptions[i],
                 State = _channels[i].State
             }).ToList();
-        }
-    }
-
-    /// <summary>
-    /// Service type manager
-    /// </summary>
-    /// <typeparam name="TService"></typeparam>
-    public class GrpcChannelManager<TService> : GrpcChannelManager
-    {
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        /// <param name="configuration"></param>
-        internal GrpcChannelManager(GrpcChannelManagerConfiguration configuration) : base(configuration)
-        {
         }
     }
 }

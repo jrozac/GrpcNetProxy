@@ -12,6 +12,10 @@ namespace GrpcNetProxy.Server
     /// </summary>
     internal class GrpcServerConfiguration
     {
+        /// <summary>
+        /// Configuration name. Important in case of multiple servers.
+        /// </summary>
+        public string Name { get; set; } = "Default";
 
         /// <summary>
         /// Options

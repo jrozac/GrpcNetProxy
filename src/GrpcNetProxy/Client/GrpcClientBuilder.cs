@@ -10,7 +10,7 @@ namespace GrpcNetProxy.Client
     /// <summary>
     /// Grpc client builder
     /// </summary>
-    internal static class GrpcClientBuildercs
+    internal static class GrpcClientBuilder
     {
 
         /// <summary>
@@ -28,16 +28,16 @@ namespace GrpcNetProxy.Client
             var newType = GrpcClientTypeBuilder.Create<TService>();
 
             // create logger
-            var logger = provider.GetService<ILoggerFactory>()?.CreateLogger("GrpcClientRequests");
+            var logger = provider?.GetService<ILoggerFactory>()?.CreateLogger("GrpcClientRequests");
 
-            // get channels proxy
-            var channelsProxy = provider.GetRequiredService<GrpcChannelManager<TService>>() as GrpcChannelManager;
+            // get channels manager
+            var channelsManager = provider.GetServices<GrpcChannelManager>().First(m => m.Name == configuration.Name);
 
             // create grpc methods
             var grpcMethods = GetGrpcMethodsForInterfaceType(typeof(TService));
 
             // create service and return
-            return (TService)Activator.CreateInstance(newType, logger, channelsProxy, grpcMethods, configuration);
+            return (TService)Activator.CreateInstance(newType, logger, channelsManager, grpcMethods, configuration);
 
         }
 

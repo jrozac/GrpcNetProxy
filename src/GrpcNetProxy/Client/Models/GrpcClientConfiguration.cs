@@ -36,5 +36,10 @@ namespace GrpcNetProxy.Client
         /// </summary>
         public Func<string> ContextGetter { get; set; }
 
+        /// <summary>
+        /// Name
+        /// </summary>
+        public string Name { get; set; }
+
     }
 }

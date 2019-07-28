@@ -153,8 +153,8 @@ namespace GrpcNetProxy.Server
                 // log request start
                 if (logger != null)
                 {
-                    logger.LogInformation("Start for action {action} with request {@request}.",
-                        $"{typeof(TService).Name}/{ method.Name}", req);
+                    logger.LogInformation("Start for action {action} on host {host} with request {@request}.",
+                        $"{typeof(TService).Name}/{ method.Name}", cfg.Name, req);
                 }
 
                 // request start action
@@ -162,6 +162,7 @@ namespace GrpcNetProxy.Server
                 {
                     MethodName = method.Name,
                     ServiceName = typeof(TService).Name,
+                    HostName = cfg.Name,
                     Request = req
                 });
 
@@ -191,6 +192,7 @@ namespace GrpcNetProxy.Server
                         {
                             MethodName = method.Name,
                             ServiceName = typeof(TService).Name,
+                            HostName = cfg.Name,
                             Request = req,
                             DurationMs = watch.ElapsedMilliseconds,
                             Exception = ex,
@@ -204,13 +206,13 @@ namespace GrpcNetProxy.Server
                         // log end 
                         if (ex != null)
                         {
-                            logger.LogInformation(ex, "End for action {action} with request {@request}, response {@response} and duration {duration}.",
-                                $"{typeof(TService).Name}/{method.Name}", req, rsp, duration);
+                            logger.LogInformation(ex, "End for action {action} on host {host} with request {@request}, response {@response} and duration {duration}.",
+                                $"{typeof(TService).Name}/{method.Name}", cfg.Name, req, rsp, duration);
                         }
                         else
                         {
-                            logger?.LogInformation("End for action {action} with request {@request}, response {@response} and duration {duration}.",
-                                $"{typeof(TService).Name}/{method.Name}", req, rsp, duration);
+                            logger?.LogInformation("End for action {action} on host {host} with request {@request}, response {@response} and duration {duration}.",
+                                $"{typeof(TService).Name}/{method.Name}", cfg.Name, req, rsp, duration);
                         }
                     }
 

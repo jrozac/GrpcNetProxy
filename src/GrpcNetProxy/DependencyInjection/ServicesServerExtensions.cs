@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
+using System.Linq;
 
 namespace GrpcNetProxy.DependencyInjection
 {
@@ -35,20 +36,45 @@ namespace GrpcNetProxy.DependencyInjection
         /// </summary>
         /// <param name="collection"></param>
         /// <returns></returns>
-        public static IServiceCollection AddGrpcHostedService(this IServiceCollection collection)
+        public static IServiceCollection AddGrpcHostedService(this IServiceCollection collection, string name = "Default")
         {
-            collection.AddSingleton<IHostedService, GrpcHostedService>(provider => new GrpcHostedService(provider.GetService<GrpcHost>()));
+            collection.AddSingleton<IHostedService, GrpcHostedService>(provider => 
+                new GrpcHostedService(provider.GetServices<GrpcHost>().First(h => h.Name == name)));
             return collection;
         }
 
         /// <summary>
-        /// Grpc host getter
+        /// Add grpc hosted service with configuration
         /// </summary>
-        /// <param name="provider"></param>
+        /// <param name="collection"></param>
+        /// <param name="cfg"></param>
         /// <returns></returns>
-        public static GrpcHost GetGrpcHost(this IServiceProvider provider)
+        public static IServiceCollection AddGrpcHostedService(this IServiceCollection collection, Action<ServerConfigurator> cfg)
         {
-            return provider.GetRequiredService<GrpcHost>();
+            // apply configuration
+            ServerConfigurator configurator = new ServerConfigurator();
+            cfg?.Invoke(configurator);
+
+            // register host
+            collection.AddSingleton(provider => new GrpcHost(provider, configurator.Configuration));
+
+            // add hosted service
+            collection.AddSingleton<IHostedService, GrpcHostedService>(provider =>
+                new GrpcHostedService(provider.GetServices<GrpcHost>().First(h => h.Name == configurator.Configuration.Name)));
+
+            // return
+            return collection;
+        }
+
+        /// <summary>
+        /// Gets grpc host by name
+        /// </summary>
+        /// <param name="services"></param>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public static GrpcHost GetGrpcHost(this IServiceProvider services, string name = "Default")
+        {
+            return services.GetServices<GrpcHost>().First(h => h.Name == name);
         }
 
     }

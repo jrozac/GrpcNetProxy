@@ -72,14 +72,15 @@ namespace GrpcNetProxy.Client
             // log start
             if(_configuration.ClientOptions.LogRequests && _logger != null)
             {
-                _logger.LogDebug("Start for action {action} with request {@request}.",
-                    $"{serviceName}/{methodName}", request);
+                _logger.LogDebug("Start for action {action} on client {client} with request {@request}.",
+                    $"{serviceName}/{methodName}", _channelManager.Name, request);
             }
             
             // invoke start action
             _configuration.OnRequestStart?.Invoke(_logger, new RequestStartData {
                 ServiceName = serviceName,
                 MethodName = methodName,
+                HostName = _channelManager.Name,
                 Request = request });
 
             // execute call 
@@ -117,6 +118,7 @@ namespace GrpcNetProxy.Client
                 {
                     ServiceName = serviceName,
                     MethodName = methodName,
+                    HostName = _channelManager.Name,
                     Request = request,
                     Response = rsp,
                     DurationMs = watch.ElapsedMilliseconds,
@@ -132,12 +134,12 @@ namespace GrpcNetProxy.Client
                 {
                     if(ex != null)
                     {
-                        _logger.LogInformation(ex, "End for action {action} with request {@request}, response {@response} and duration {duration}.",
-                            $"{serviceName}/{methodName}", request, rsp, duration);
+                        _logger.LogInformation(ex, "End for action {action} on client {client} with request {@request}, response {@response} and duration {duration}.",
+                            $"{serviceName}/{methodName}", _channelManager.Name, request, rsp, duration);
                     } else
                     {
-                        _logger.LogInformation("End for action {action} with request {@request}, response {@response} and duration {duration}.",
-                            $"{serviceName}/{methodName}", request, rsp, duration);
+                        _logger.LogInformation("End for action {action} on client {client}  with request {@request}, response {@response} and duration {duration}.",
+                            $"{serviceName}/{methodName}", _channelManager.Name, request, rsp, duration);
                     }
                 }
 
@@ -168,5 +170,9 @@ namespace GrpcNetProxy.Client
             return method as Method<TRequest, TResponse>;
         }
 
+        /// <summary>
+        /// Configuration name
+        /// </summary>
+        internal string Name => _configuration.Name;
     }
 }

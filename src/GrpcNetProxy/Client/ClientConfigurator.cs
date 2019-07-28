@@ -1,6 +1,7 @@
 ﻿using GrpcNetProxy.Shared;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 
 namespace GrpcNetProxy.Client
 {
@@ -89,7 +90,37 @@ namespace GrpcNetProxy.Client
             return this;
         }
 
+        /// <summary>
+        /// Set name
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public ClientConfigurator SetName(string name)
+        {
+            ClientConfiguration.Name = name;
+            return this;
+        }
+
         #endregion
 
+        #region Services
+
+        /// <summary>
+        /// Registered services
+        /// </summary>
+        internal List<Type> RegisteredServices { get; private set;} = new List<Type>();
+
+        /// <summary>
+        /// Add service
+        /// </summary>
+        /// <typeparam name="TService"></typeparam>
+        /// <returns></returns>
+        public ClientConfigurator AddService<TService>() where TService : class
+        {
+            RegisteredServices.Add(typeof(TService));
+            return this;
+        }
+
+        #endregion
     }
 }

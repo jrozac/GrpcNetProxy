@@ -32,6 +32,11 @@ namespace GrpcNetProxy.Server
         private Grpc.Core.Server _server;
 
         /// <summary>
+        /// Get host name
+        /// </summary>
+        public string Name => _cfg?.Name;
+
+        /// <summary>
         /// Constructor with server and configuration as parameters
         /// </summary>
         /// <param name="provider"></param>
