@@ -16,14 +16,9 @@ namespace GrpcNetProxy.Client
         private readonly GrpcChannelManagerConfiguration _configuration;
 
         /// <summary>
-        /// Channels
+        /// Round robin policy
         /// </summary>
-        private readonly List<Channel> _channels = new List<Channel>();
-
-        /// <summary>
-        /// Grpc invokers 
-        /// </summary>
-        private readonly List<DefaultCallInvoker> _invokers = new List<DefaultCallInvoker>();
+        private RoundRobinPolicy<InvokerBundle> _roundRobin;
 
         /// <summary>
         /// Manager name
@@ -48,8 +43,17 @@ namespace GrpcNetProxy.Client
         /// <returns></returns>
         internal CallInvoker NextInvoker()
         {
-            // todo: implement round robin or similar
-            return _invokers.FirstOrDefault();
+            return _roundRobin.GetNext().Invoker;
+        }
+
+        /// <summary>
+        /// Active client condition
+        /// </summary>
+        /// <param name="item"></param>
+        /// <returns></returns>
+        private bool ActiveClientCondition(InvokerBundle item)
+        {
+            return item.Channel.State == ChannelState.Idle || item.Channel.State == ChannelState.Ready;
         }
 
         /// <summary>
@@ -57,8 +61,17 @@ namespace GrpcNetProxy.Client
         /// </summary>
         private void Init()
         {
-            _channels.AddRange(_configuration.ChannelsOptions.Select(options => new Channel(options.Url, options.Port, ChannelCredentials.Insecure)));
-            _invokers.AddRange(_channels.Select(channel => new DefaultCallInvoker(channel)));
+
+            // create channels
+            var items = _configuration.ChannelsOptions.Select(options => {
+                var ch = new Channel(options.Url, options.Port, ChannelCredentials.Insecure);
+                var inv = new DefaultCallInvoker(ch);
+                return new InvokerBundle(ch, inv, options);
+            }).ToList();
+
+            // create invokers
+            _roundRobin = new RoundRobinPolicy<InvokerBundle>(items, ActiveClientCondition);
+
         }
 
         /// <summary>
@@ -67,9 +80,9 @@ namespace GrpcNetProxy.Client
         /// <returns></returns>
         public List<GrpcChannelStatus> GetChannelsStatus()
         {
-            return Enumerable.Range(0, _channels.Count).Select(i => new GrpcChannelStatus {
-                Options = _configuration.ChannelsOptions[i],
-                State = _channels[i].State
+            return _roundRobin.GetItems().Select(b => new GrpcChannelStatus {
+                Options = b.ConnectionData,
+                State = b.Channel.State
             }).ToList();
         }
     }
