@@ -16,5 +16,10 @@
         /// </summary>
         public string ContextKey { get; set; } = "X-ContextId";
 
+        /// <summary>
+        /// Request timeout in ms
+        /// </summary>
+        public int TimeoutMs { get; set; } = 10 * 1000;
+
     }
 }

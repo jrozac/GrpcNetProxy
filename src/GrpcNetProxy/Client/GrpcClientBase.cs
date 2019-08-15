@@ -109,11 +109,20 @@ namespace GrpcNetProxy.Client
                     headers.Add(new Metadata.Entry(_configuration.ClientOptions.ContextKey, contextId));
                 }
 
-                // make call
-                var callOptions = new CallOptions(cancellationToken: ct, headers: headers);
-                using (var call = invoker.AsyncUnaryCall(GetGrpcMethodDefinition<TRequest, TResponse>(serviceName, methodName), null, callOptions, request))
+                // call with custom token source to enable cancellation
+                using(var tokenSource = new CancellationTokenSource())
                 {
-                    rsp = await call.ResponseAsync.ConfigureAwait(false);
+
+                    // register argument token ad set timeout for call
+                    ct.Register(tokenSource.Cancel);
+                    tokenSource.CancelAfter(_configuration.ClientOptions.TimeoutMs);
+
+                    // make call
+                    var callOptions = new CallOptions(cancellationToken: tokenSource.Token, headers: headers);
+                    using (var call = invoker.AsyncUnaryCall(GetGrpcMethodDefinition<TRequest, TResponse>(serviceName, methodName), null, callOptions, request))
+                    {
+                        rsp = await call.ResponseAsync.ConfigureAwait(false);
+                    }
                 }
 
                 // reset errror
@@ -124,6 +133,7 @@ namespace GrpcNetProxy.Client
                 invokerBundle.AddError();
                 ex = e;
                 throw;
+
             } finally
             {
 

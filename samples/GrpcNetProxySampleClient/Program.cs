@@ -1,4 +1,5 @@
-﻿using GrpcNetProxy.Client;
+﻿using Grpc.Core;
+using GrpcNetProxy.Client;
 using GrpcNetProxy.DependencyInjection;
 using GrpcNetProxySampleShared;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,6 +34,14 @@ namespace GrpcNetProxySampleClient
             // get managers
             var managerOne = provider.GetGrpcClientManager("GrpcClientOne");
             var managerTwo = provider.GetGrpcClientManager("GrpcClientTwo");
+
+            // call with cancel
+            try
+            {
+                var user = userServiceOne.GetUserAndWait(new UserFilter { Id = "test" }).GetAwaiter().GetResult();
+            } catch(RpcException e)
+            {
+            }
 
             // run methods on both services
             int count = 16;
