@@ -1,5 +1,6 @@
 ﻿using GrpcNetProxy.DependencyInjection;
 using GrpcNetProxy.Server;
+using GrpcNetProxy.Shared;
 using GrpcNetProxySampleShared;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -36,11 +37,13 @@ namespace GrpcNetProxySampleServer
 
                 // register services
                 services.AddScoped<IUserService, UserService>();
+                services.AddScoped<IStatusService, StatusService>();
 
                 // create grpc server one
                 services.AddGrpcServer(cfg => 
                     cfg.SetConnection(new GrpcServerConnectionData { Port = 5000, Url = "127.0.0.1" }).
                     AddService<IUserService>().
+                    AddStatusService().
                     SetName("GrpcServiceOne").
                     SetOnRequestEndAction((l,c, data) => Console.WriteLine($"Request completed at {DateTime.Now}."))
                 );
@@ -51,6 +54,7 @@ namespace GrpcNetProxySampleServer
                     cfg.SetConnection(new GrpcServerConnectionData { Port = 5001, Url = "127.0.0.1" }).
                     SetName("GrpcServiceTwo").
                     AddService<IUserService>().
+                    AddStatusService().
                     SetOnRequestEndAction((l, c, data) => Console.WriteLine($"Request completed at {DateTime.Now}."))
                 );
                 services.AddGrpcHostedService("GrpcServiceTwo");

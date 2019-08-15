@@ -37,7 +37,7 @@ namespace GrpcNetProxy.Server
             var allMethods = cfg.ServicesTypes.SelectMany(type => type.GetMethods(BindingFlags.Public | BindingFlags.Instance)).ToList();
 
             // setup methods 
-            allMethods.ForEach(m => GrpcServerBuilder.RegisterServiceMethodToGrpc(m, provider, logger, builder, cfg));
+            allMethods.ForEach(m => RegisterServiceMethodToGrpc(m, provider, logger, builder, cfg));
 
             // build services
             var services = builder.Build();

@@ -30,10 +30,28 @@ namespace GrpcNetProxySampleClient
             var userServiceOne = provider.GetGrpcClientService<IUserService>("GrpcClientOne");
             var userServiceTwo = provider.GetGrpcClientService<IUserService>("GrpcClientTwo");
 
+            // get managers
+            var managerOne = provider.GetGrpcClientManager("GrpcClientOne");
+            var managerTwo = provider.GetGrpcClientManager("GrpcClientTwo");
+
             // run methods on both services
-            var callTasks = Enumerable.Range(0, 10).
-                Select(i => (i % 2 == 0 ? userServiceOne : userServiceTwo).GetUser(new UserFilter { Id = i.ToString() }, new CancellationToken())).ToArray();
+            int count = 16;
+            var tokenSource = new CancellationTokenSource();
+            var token = tokenSource.Token;
+            var callTasks = Enumerable.Range(0, count).
+                Select(i => (i % 2 == 0 ? userServiceOne : userServiceTwo).GetUser(new UserFilter { Id = i.ToString() }, token)).ToArray();
             Task.WaitAll(callTasks);
+
+            // print results 
+            callTasks.ToList().ForEach(t => Console.WriteLine($"Got user {t.Result.Id} names {t.Result.Name}."));
+
+            // get status
+            var chStatusOne = managerOne.GetChannelsStatus();
+            var chStatusTwo = managerTwo.GetChannelsStatus();
+
+            // print statuses 
+            chStatusOne.ForEach(s => Console.WriteLine($"Status client one channel: {s.Id}, invoke count: {s.InvokeCount}."));
+            chStatusTwo.ForEach(s => Console.WriteLine($"Status client two channel: {s.Id}, invoke count: {s.InvokeCount}."));
 
             // get new line
             Console.ReadLine();
@@ -54,7 +72,12 @@ namespace GrpcNetProxySampleClient
             {
                 Port = 5000,
                 Url = "127.0.0.1"
-            }).AddService<IUserService>().
+            }).AddHost(new GrpcChannelConnectionData {
+                Port = 5001,
+                Url = "127.0.0.1"
+            }).
+            AddService<IUserService>().
+            EnableStatusService().
             SetName("GrpcClientOne"));
 
             // add grpc client two
@@ -63,6 +86,7 @@ namespace GrpcNetProxySampleClient
                 Port = 5001,
                 Url = "127.0.0.1"
             }).AddService<IUserService>().
+            EnableStatusService().
             SetName("GrpcClientTwo"));
 
             // add logging and build provider for services

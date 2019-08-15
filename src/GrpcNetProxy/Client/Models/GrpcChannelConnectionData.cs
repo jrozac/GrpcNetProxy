@@ -14,5 +14,10 @@
         /// Port
         /// </summary>
         public int Port { get; set; }
+
+        /// <summary>
+        /// Error threshold
+        /// </summary>
+        public int ErrorThreshold { get; set; } = 5;
     }
 }

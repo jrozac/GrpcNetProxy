@@ -111,7 +111,7 @@ namespace GrpcNetProxy.Client
             // set return 
             il.Emit(OpCodes.Ret);
 
-            // set method tobuilder
+            // set method to builder
             typeBuilder.DefineMethodOverride(methodBuilder, method);
         }
 

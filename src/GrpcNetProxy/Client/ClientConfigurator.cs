@@ -20,17 +20,33 @@ namespace GrpcNetProxy.Client
         internal GrpcChannelManagerConfiguration ChannelManagerConfiguration { get; private set; } = new GrpcChannelManagerConfiguration();
 
         /// <summary>
+        /// Enable status service
+        /// </summary>
+        /// <returns></returns>
+        public ClientConfigurator EnableStatusService()
+        {
+            ChannelManagerConfiguration.StatusServiceEnabled = true;
+            return this;
+        }
+
+        /// <summary>
+        /// Set monitor interval in ms
+        /// </summary>
+        /// <param name="intervalMs"></param>
+        /// <returns></returns>
+        public ClientConfigurator SetMonitorInterval(int intervalMs)
+        {
+            ChannelManagerConfiguration.MonitorInterval = intervalMs;
+            return this;
+        }
+
+        /// <summary>
         /// Add host 
         /// </summary>
         /// <param name="options"></param>
         /// <returns></returns>
         public ClientConfigurator AddHost(GrpcChannelConnectionData options)
         {
-            // todo: currently only one host is supported
-            if(ChannelManagerConfiguration.ChannelsOptions.Count >0)
-            {
-                throw new ArgumentException("Only one host is currently supported.");
-            }
 
             // add 
             ChannelManagerConfiguration.ChannelsOptions.Add(options);

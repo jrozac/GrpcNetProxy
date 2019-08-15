@@ -73,6 +73,17 @@ namespace GrpcNetProxy.Server
         }
 
         /// <summary>
+        /// Add status service
+        /// </summary>
+        /// <typeparam name="TService"></typeparam>
+        /// <returns></returns>
+        public ServerConfigurator AddStatusService()
+        {
+            Configuration.ServicesTypes.Add(typeof(IStatusService));
+            return this;
+        }
+
+        /// <summary>
         /// set host
         /// </summary>
         /// <param name="host"></param>

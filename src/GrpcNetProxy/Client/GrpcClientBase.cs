@@ -21,6 +21,11 @@ namespace GrpcNetProxy.Client
         private readonly GrpcChannelManager _channelManager;
 
         /// <summary>
+        /// Custom invoker get delegate
+        /// </summary>
+        internal Func<GrpcChannelManager, object, string, string, InvokerBundle> GetCustomInvokerForRequestDelegate;
+
+        /// <summary>
         /// Logger
         /// </summary>
         private readonly ILogger _logger;
@@ -83,6 +88,14 @@ namespace GrpcNetProxy.Client
                 HostName = _channelManager.Name,
                 Request = request });
 
+            // pick invoker (channel, round robin)
+            var invokerBundle = GetCustomInvokerForRequestDelegate?.Invoke(_channelManager, request, serviceName, methodName) ?? 
+                _channelManager.NextInvoker();
+            var invoker = invokerBundle.Invoker;
+
+            // add invoke count
+            invokerBundle.AddInvokeCount();
+
             // execute call 
             Exception ex = null;
             TResponse rsp = null;
@@ -96,9 +109,6 @@ namespace GrpcNetProxy.Client
                     headers.Add(new Metadata.Entry(_configuration.ClientOptions.ContextKey, contextId));
                 }
 
-                // pick invoker (channel, round robin)
-                var invoker = _channelManager.NextInvoker();
-
                 // make call
                 var callOptions = new CallOptions(cancellationToken: ct, headers: headers);
                 using (var call = invoker.AsyncUnaryCall(GetGrpcMethodDefinition<TRequest, TResponse>(serviceName, methodName), null, callOptions, request))
@@ -106,8 +116,12 @@ namespace GrpcNetProxy.Client
                     rsp = await call.ResponseAsync.ConfigureAwait(false);
                 }
 
+                // reset errror
+                invokerBundle.ResetError();
+
             } catch(Exception e)
             {
+                invokerBundle.AddError();
                 ex = e;
                 throw;
             } finally
@@ -174,5 +188,6 @@ namespace GrpcNetProxy.Client
         /// Configuration name
         /// </summary>
         internal string Name => _configuration.Name;
+
     }
 }

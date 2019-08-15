@@ -29,7 +29,10 @@ namespace GrpcNetProxy.DependencyInjection
 
             // add channels proxy
             collection.AddSingleton(provider => new GrpcChannelManager(configurator.ClientConfiguration.Name, configurator.ChannelManagerConfiguration));
-            
+
+            // add client manager
+            collection.AddSingleton(provider => new GrpcClientManager(configurator.ClientConfiguration, provider));
+
             // add services
             configurator.RegisteredServices.ForEach(svcType => {
 
@@ -52,9 +55,9 @@ namespace GrpcNetProxy.DependencyInjection
         /// <param name="provider"></param>
         /// <param name="name"></param>
         /// <returns></returns>
-        public static GrpcChannelManager GetGrpcClientChannelManager(this IServiceProvider provider, string name = "Default")
+        public static GrpcClientManager GetGrpcClientManager(this IServiceProvider provider, string name = "Default")
         {
-            return provider.GetServices<GrpcChannelManager>().First(m => m.Name == name);
+            return provider.GetServices<GrpcClientManager>().First(m => m.Name == name);
         }
 
         /// <summary>

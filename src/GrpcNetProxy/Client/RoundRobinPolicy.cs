@@ -21,7 +21,7 @@ namespace GrpcNetProxy.Client
         /// <summary>
         /// Condition checker
         /// </summary>
-        private readonly Func<TItem, bool> _condition;
+        private readonly Func<TItem, int> _channelScoreDelegate;
 
         /// <summary>
         /// Current position
@@ -32,11 +32,11 @@ namespace GrpcNetProxy.Client
         /// Constructor
         /// </summary>
         /// <param name="items"></param>
-        /// <param name="conditionDelegate"></param>
-        public RoundRobinPolicy(List<TItem> items, Func<TItem, bool> conditionDelegate)
+        /// <param name="channelScoreDelegate"></param>
+        public RoundRobinPolicy(List<TItem> items, Func<TItem, int> channelScoreDelegate)
         {
             _items = items;
-            _condition = conditionDelegate;
+            _channelScoreDelegate = channelScoreDelegate;
         }
 
         /// <summary>
@@ -46,36 +46,33 @@ namespace GrpcNetProxy.Client
         public List<TItem> GetItems() => _items;
 
         /// <summary>
-        /// Get active items
-        /// </summary>
-        /// <returns></returns>
-        public List<TItem> GetActiveItems() => _items.Where(itm => _condition(itm)).ToList();
-
-        /// <summary>
         /// Get next item
         /// </summary>
         /// <returns></returns>
         public TItem GetNext()
         {
-            // get active items and return first if none active
-            var allItems = GetActiveItems();
-            if(!allItems.Any())
-            {
-                return _items.FirstOrDefault();
-            }
 
             // fix overflow
-            if(_current > long.MaxValue - 100000)
+            if (_current > long.MaxValue - 100000)
             {
                 Interlocked.Exchange(ref _current, -1);
             }
 
             // get next position
-            var val = Interlocked.Increment(ref _current);
-            var pos = (int) val % allItems.Count;
+            var roundRobinPos = Interlocked.Increment(ref _current) % _items.Count;
+
+            // get channel (conditional round-robin)
+            var channel = Enumerable.Range(0, _items.Count).
+                Select(k => new Tuple<int, TItem>(_channelScoreDelegate(_items.ElementAt(k)) + (roundRobinPos == k ? 1 : 0), _items.ElementAt(k))).
+                Where(t => t.Item1 >= 0).OrderByDescending(t => t.Item1).FirstOrDefault();
+
+            // no channel availalbe
+            if(channel == null) {
+                throw new InvalidOperationException("No channels available.");
+            }
 
             // return
-            return allItems[pos];
+            return channel.Item2;
  
         }
 
