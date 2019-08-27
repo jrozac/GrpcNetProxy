@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Grpc.Core;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -68,7 +69,7 @@ namespace GrpcNetProxy.Client
 
             // no channel availalbe
             if(channel == null) {
-                throw new InvalidOperationException("No channels available.");
+                throw new RpcException(new Status(StatusCode.Unavailable, "No channels available."));
             }
 
             // return

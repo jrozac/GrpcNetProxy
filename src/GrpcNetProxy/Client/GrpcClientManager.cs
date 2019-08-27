@@ -139,7 +139,7 @@ namespace GrpcNetProxy.Client
                     var status = await _statusService.CheckStatus(new CheckStatusRequest { ChannelId = channelId }, store.Token);
                     remoteStatus = status?.Status ?? false;
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                 }
             }
@@ -162,7 +162,7 @@ namespace GrpcNetProxy.Client
         /// </summary>
         public void ResetChannels()
         {
-             var tasks = _channelManager.GetChannelsIds().Select(async chId => {
+            var tasks = _channelManager.GetChannelsIds().Select(async chId => {
                 _channelManager.ResetChannel(chId);
                  await GetChannelRemoteStatusValue(chId);
             });

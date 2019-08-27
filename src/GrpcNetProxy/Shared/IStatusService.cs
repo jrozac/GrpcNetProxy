@@ -16,7 +16,7 @@ namespace GrpcNetProxy.Shared
         /// <param name="request"></param>
         /// <param name="token"></param>
         /// <returns></returns>
-        Task<CheckStatusResponse> CheckStatus(CheckStatusRequest request, CancellationToken token);
+        Task<CheckStatusResponse> CheckStatus(CheckStatusRequest request, CancellationToken token = default);
 
     }
 }
