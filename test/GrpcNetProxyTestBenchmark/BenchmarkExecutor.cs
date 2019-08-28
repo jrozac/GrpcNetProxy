@@ -100,10 +100,6 @@ namespace GrpcNetProxyTestBenchmark
             // run
             while (!tkn.IsCancellationRequested)
             {
-
-                // wait a bit amog requests
-                await Task.Delay(20);
-
                 // get id 
                 long id = Interlocked.Increment(ref _reqCount);
 
