@@ -6,9 +6,9 @@ A proxy to support simple GRPC communication between micro services in .NET core
 ## Projects organization
 
 There are three projects and all are included in a test solution `GrpcNetProxyTest` inside the test folder. The projects are:
-** *GrpcNetProxy*. It is the main project, which implements the GRPC client and server proxy.
-** *GrpcNetProxyTest*. It is a unit test project.
-** *GrpcNetProxyTestBenchmark*. It is a command line application to run a benchmark test on demo service.
+* **GrpcNetProxy**. It is the main project, which implements the GRPC client and server proxy.
+* **GrpcNetProxyTest**. It is a unit test project.
+* **GrpcNetProxyTestBenchmark**. It is a command line application to run a benchmark test on demo service.
 
 
 ## Services interfaces
