@@ -50,7 +50,7 @@ namespace GrpcNetProxyTest.Setup
                         services.AddGrpcHostedService(setup.Name);
                     } else
                     {
-                        services.AddGrpcHostedService(setup.Name);
+                        services.AddGrpcHostedService();
                     }
                 });
 
