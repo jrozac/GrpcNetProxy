@@ -1,0 +1,21 @@
+﻿{
+  "Clients": [
+    {
+      "Name": "Default",
+      "MonitorInterval": 60000,
+      "Hosts": [
+        {
+          "Url": "127.0.0.1",
+          "Port": 5001,
+          "ErrorThreshold": 5
+        }
+      ],
+      "EnableStatusService": false,
+      "Options": {
+        "LogRequests": false,
+        "ContextKey": "X-ContextId",
+        "TimeoutMs": 10000
+      }
+    }
+  ]
+}

@@ -14,9 +14,8 @@ namespace GrpcNetProxy.DependencyInjection
     {
 
         /// <summary>
-        /// Add grpc client
+        /// Setup custom client
         /// </summary>
-        /// <typeparam name="TService"></typeparam>
         /// <param name="collection"></param>
         /// <param name="cfg"></param>
         /// <returns></returns>
@@ -25,7 +24,26 @@ namespace GrpcNetProxy.DependencyInjection
 
             // apply configuration
             ClientConfigurator configurator = new ClientConfigurator();
-            cfg?.Invoke(configurator);
+            collection.AddGrpcClient(configurator, cfg);
+
+            // return
+            return collection;
+        }
+
+        /// <summary>
+        /// Add grpc client
+        /// </summary>
+        /// <typeparam name="TService"></typeparam>
+        /// <param name="collection"></param>
+        /// <param name="configurator"></param>
+        /// <param name="setup"></param>
+        /// <returns></returns>
+        internal static IServiceCollection AddGrpcClient(this IServiceCollection collection, ClientConfigurator configurator, 
+            Action<ClientConfigurator> setup = null)
+        {
+
+            // apply configuration
+            setup?.Invoke(configurator);
 
             // add channels proxy
             collection.AddSingleton(provider => new GrpcChannelManager(configurator.ClientConfiguration.Name, configurator.ChannelManagerConfiguration));

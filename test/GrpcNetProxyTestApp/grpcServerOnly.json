@@ -1,0 +1,16 @@
+﻿{
+  "Servers": [
+    {
+      "Name": "Default",
+      "EnableStatusService": false,
+      "Options": {
+        "LogRequests": false,
+        "ContextKey": "X-ContextId"
+      },
+      "Host": {
+        "Url": "127.0.0.1",
+        "Port": 5001
+      }
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\GrpcNetProxy\GrpcNetProxy.csproj" />
+    <ProjectReference Include="..\GrpcNetProxyTest\GrpcNetProxyTest.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="grpcClientOnly.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="grpcServerOnly.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

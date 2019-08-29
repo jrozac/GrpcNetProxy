@@ -9,6 +9,7 @@ There are three projects and all are included in a test solution `GrpcNetProxyTe
 * **GrpcNetProxy**. It is the main project, which implements the GRPC client and server proxy.
 * **GrpcNetProxyTest**. It is a unit test project.
 * **GrpcNetProxyTestBenchmark**. It is a command line application to run a benchmark test on demo service.
+* **GrpcNetProxyTestApp**. Test application which illustrates the usage of configuration files.
 
 
 ## Services interfaces
@@ -104,4 +105,78 @@ For each client (connected to one or multiple servers), distinguished by name, a
 
 ~~~cs
 services.GetServices<GrpcClientManager>().First(m => m.Name == "TestGrpcServer").ResetChannels();
+~~~
+
+
+## Configuration files
+
+Grpc server and client can be easily initialized from configuration file. A single configuration file can contain multiple clients and/or servers configurations. However, services registration needs to be configured manually in code. For a full example refer to the project `GrpcNetProxyTestApp`.
+
+The following code snippets shows a JSON client  configuration and a JSON server configuration. Note that both client and server can be combined to a single file if used in the same application.
+
+~~~json
+{
+  "Clients": [
+    {
+      "Name": "Default",
+      "MonitorInterval": 60000,
+      "Hosts": [
+        {
+          "Url": "127.0.0.1",
+          "Port": 5001,
+          "ErrorThreshold": 5
+        }
+      ],
+      "EnableStatusService": false,
+      "Options": {
+        "LogRequests": false,
+        "ContextKey": "X-ContextId",
+        "TimeoutMs": 10000
+      }
+    }
+  ]
+}
+
+~~~json
+{
+  "Servers": [
+    {
+      "Name": "Default",
+      "EnableStatusService": false,
+      "Options": {
+        "LogRequests": false,
+        "ContextKey": "X-ContextId"
+      },
+      "Host": {
+        "Url": "127.0.0.1",
+        "Port": 5001
+      }
+    }
+  ]
+}
+
+The following code show a basic grpc server and client setup.
+
+~~~cs
+// create server
+var host = new HostBuilder().ConfigureServices((hostContext, services) =>
+{
+
+	// register services
+	services.AddScoped<ITestService, ServerTestService>();
+
+	// configure grpc server
+	var srvCfgFilePath = Path.Combine(Directory.GetCurrentDirectory(), "grpcServerOnly.json");
+	services.ConfigureGrpc(srvCfgFilePath, (cfg) =>
+	{
+		cfg.Server().AddService<ITestService>();
+	});
+
+}).Build();
+
+// create client
+var clientCfgFilePath = Path.Combine(Directory.GetCurrentDirectory(), "grpcClientOnly.json");
+var clientProvider = new ServiceCollection()
+	.ConfigureGrpc(clientCfgFilePath, (cfg) => cfg.Client().AddService<ITestService>())
+	.BuildServiceProvider();
 ~~~

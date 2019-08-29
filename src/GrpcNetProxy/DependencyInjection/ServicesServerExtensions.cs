@@ -35,6 +35,7 @@ namespace GrpcNetProxy.DependencyInjection
         /// Add grpc hosted service
         /// </summary>
         /// <param name="collection"></param>
+        /// <param name="name"></param>
         /// <returns></returns>
         public static IServiceCollection AddGrpcHostedService(this IServiceCollection collection, string name = "Default")
         {
@@ -53,7 +54,24 @@ namespace GrpcNetProxy.DependencyInjection
         {
             // apply configuration
             ServerConfigurator configurator = new ServerConfigurator();
-            cfg?.Invoke(configurator);
+            collection.AddGrpcHostedService(configurator, cfg);
+
+            // return
+            return collection;
+        }
+
+        /// <summary>
+        /// Add grpc hosted service with configurator and configuration
+        /// </summary>
+        /// <param name="collection"></param>
+        /// <param name="configurator"></param>
+        /// <param name="setupAction"></param>
+        /// <returns></returns>
+        internal static IServiceCollection AddGrpcHostedService(this IServiceCollection collection, ServerConfigurator configurator, 
+            Action<ServerConfigurator> setupAction = null)
+        {
+            // apply configuration
+            setupAction?.Invoke(configurator);
 
             // register host
             collection.AddSingleton(provider => new GrpcHost(provider, configurator.Configuration));
