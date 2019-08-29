@@ -112,7 +112,7 @@ services.GetServices<GrpcClientManager>().First(m => m.Name == "TestGrpcServer")
 
 Grpc server and client can be easily initialized from configuration file. A single configuration file can contain multiple clients and/or servers configurations. However, services registration needs to be configured manually in code. For a full example refer to the project `GrpcNetProxyTestApp`.
 
-The following code snippets shows a JSON client  configuration and a JSON server configuration. Note that both client and server can be combined to a single file if used in the same application.
+The following code snippets shows a JSON client configuration and a JSON server configuration. Note that both client and server can be combined to a single file if used in the same application.
 
 ~~~json
 {
@@ -136,6 +136,7 @@ The following code snippets shows a JSON client  configuration and a JSON server
     }
   ]
 }
+~~~
 
 ~~~json
 {
@@ -154,6 +155,7 @@ The following code snippets shows a JSON client  configuration and a JSON server
     }
   ]
 }
+~~~
 
 The following code show a basic grpc server and client setup.
 
