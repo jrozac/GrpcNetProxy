@@ -1,4 +1,5 @@
 ﻿using GrpcNetProxy.Server;
+using System.Collections.Generic;
 
 namespace GrpcNetProxy
 {
@@ -28,6 +29,11 @@ namespace GrpcNetProxy
         /// Set host data
         /// </summary>
         public GrpcServerConnectionData Host { get; set; }
+
+        /// <summary>
+        /// Services
+        /// </summary>
+        public List<string> Services { get; set; }
 
     }
 }

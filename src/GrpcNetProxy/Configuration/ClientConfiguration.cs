@@ -34,5 +34,11 @@ namespace GrpcNetProxy
         /// Client options
         /// </summary>
         public GrpcClientOptions Options { get; set; }
+
+        /// <summary>
+        /// Services 
+        /// </summary>
+        public List<string> Services { get; set; }
+
     }
 }

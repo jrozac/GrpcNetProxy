@@ -69,8 +69,13 @@ namespace GrpcNetProxy.Configuration
                     builder.SetOptions(config.Options);
                 };
 
+                // get services
+                config.Services?.Distinct().ToList().ForEach(svc => {
+                    builder.AddService(svc);
+                });
+
                 // set host connection
-                if(config.Host != null)
+                if (config.Host != null)
                 {
                     builder.SetConnection(config.Host);
                 }
@@ -118,6 +123,11 @@ namespace GrpcNetProxy.Configuration
                 {
                     builder.SetClientOptions(config.Options);
                 };
+
+                // get services
+                config.Services?.Distinct().ToList().ForEach(svc => {
+                    builder.AddService(svc);
+                });
 
                 // return
                 return builder;

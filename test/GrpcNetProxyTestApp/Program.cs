@@ -30,17 +30,14 @@ namespace GrpcNetProxyTestApp
 
                 // configure grpc server
                 var srvCfgFilePath = Path.Combine(Directory.GetCurrentDirectory(), "grpcServerOnly.json");
-                services.ConfigureGrpc(srvCfgFilePath, (cfg) =>
-                {
-                    cfg.Server().AddService<ITestService>();
-                });
+                services.ConfigureGrpc(srvCfgFilePath);
 
             }).Build();
 
             // create client
             var clientCfgFilePath = Path.Combine(Directory.GetCurrentDirectory(), "grpcClientOnly.json");
             var clientProvider = new ServiceCollection()
-                .ConfigureGrpc(clientCfgFilePath, (cfg) => cfg.Client().AddService<ITestService>())
+                .ConfigureGrpc(clientCfgFilePath)
                 .BuildServiceProvider();
 
             // start host 

@@ -15,7 +15,10 @@
         "LogRequests": false,
         "ContextKey": "X-ContextId",
         "TimeoutMs": 10000
-      }
+      },
+      "Services": [
+        "GrpcNetProxyTest.Apl.ITestService, GrpcNetProxyTest"
+      ]
     }
   ]
 }

@@ -1,7 +1,9 @@
-﻿using GrpcNetProxy.Shared;
+﻿using GrpcNetProxy.Generics;
+using GrpcNetProxy.Shared;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace GrpcNetProxy.Client
 {
@@ -134,6 +136,28 @@ namespace GrpcNetProxy.Client
         public ClientConfigurator AddService<TService>() where TService : class
         {
             RegisteredServices.Add(typeof(TService));
+            return this;
+        }
+
+        /// <summary>
+        /// Add service by full qualified type name 
+        /// </summary>
+        /// <param name="service"></param>
+        /// <returns></returns>
+        public ClientConfigurator AddService(string service)
+        {
+
+            // resolve type
+            var type = AppDomain.CurrentDomain.ResolveType(service);
+            if(type == null || !type.IsInterface)
+            {
+                throw new ArgumentException($"Service interface type {service} is not vaild.");
+            }
+
+            // add service
+            RegisteredServices.Add(type);
+
+            // return 
             return this;
         }
 
