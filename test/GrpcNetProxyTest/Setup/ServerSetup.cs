@@ -13,6 +13,11 @@
         public bool EnableStatus { get; set; }
 
         /// <summary>
+        /// Enable stats
+        /// </summary>
+        public bool EnableStats { get; set; }
+
+        /// <summary>
         /// Server name 
         /// </summary>
         public string Name { get; set; }

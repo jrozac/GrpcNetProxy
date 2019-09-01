@@ -38,6 +38,11 @@ namespace GrpcNetProxyTest.Scenarios
         public virtual bool EnableStatusService => false;
 
         /// <summary>
+        /// Server stats enabled
+        /// </summary>
+        public virtual bool EnableServerStats => false;
+
+        /// <summary>
         /// Server host
         /// </summary>
         public IHost GetServerHost() => _host;
@@ -71,7 +76,12 @@ namespace GrpcNetProxyTest.Scenarios
         /// <returns></returns>
         public virtual ServerSetup[] GetServersSetup()
         {
-            var setups = Enumerable.Range(Port, 1).Select(p => new ServerSetup { EnableStatus = EnableStatusService, Port = p, Name = $"GrpcServer_{p}" });
+            var setups = Enumerable.Range(Port, 1).Select(p => new ServerSetup {
+                EnableStatus = EnableStatusService,
+                Port = p,
+                Name = $"GrpcServer_{p}",
+                EnableStats = EnableServerStats
+            });
             return setups.ToArray();
         }
 

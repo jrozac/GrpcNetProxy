@@ -1,9 +1,11 @@
 ﻿using GrpcNetProxy.DependencyInjection;
+using GrpcNetProxy.Server;
 using GrpcNetProxyTest.Apl;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
 using System.IO;
+using System.Linq;
 
 namespace GrpcNetProxyTestApp
 {
@@ -41,7 +43,7 @@ namespace GrpcNetProxyTestApp
                 .BuildServiceProvider();
 
             // start host 
-            host.Start();
+            host.Start();   
 
             // call grpc 
             var rsp = clientProvider.GetService<ITestService>().TestMethodSuccess(new TestRequest { Id = "TestId" })
@@ -49,6 +51,12 @@ namespace GrpcNetProxyTestApp
 
             // print result
             Console.WriteLine(rsp.Id);
+
+            // get stats 
+            var stats = host.Services.GetService<GrpcHost>().GetStats();
+            stats.ToList().ForEach(stat => {
+                Console.WriteLine($"{stat.Key}: req={stat.Value.ReqCount}, err={stat.Value.ErrCount}");
+            });
 
             // stop host
             host.StopAsync();

@@ -132,6 +132,9 @@ namespace GrpcNetProxy.Server
             where TResponse : class
         {
 
+            // get host stats 
+            var stats = provider.GetServices<GrpcHost>().FirstOrDefault(h => h.Name == cfg.Name)?.Stats;
+            
             // add method 
             builder.AddMethod(method, async (req, responseStream, context) =>
             {
@@ -166,6 +169,9 @@ namespace GrpcNetProxy.Server
                     Request = req
                 });
 
+                // add stats 
+                stats?.NewRequest(typeof(TService).Name, method.Name, context);
+
                 // execution inside new scope
                 Exception ex = null;
                 TResponse rsp = null;
@@ -181,6 +187,8 @@ namespace GrpcNetProxy.Server
                     }
                     catch (Exception e)
                     {
+                        // save error
+                        stats?.RequestError(typeof(TService).Name, method.Name, context, e.Message);
                         ex = e;
                         throw;
                     }

@@ -34,6 +34,9 @@ namespace GrpcNetProxyTest.Setup
                     // server setup
                     services.AddGrpcServer(cfg =>
                     {
+                        cfg.SetOptions(new GrpcServerOptions {
+                            StatsEnabled = setup.EnableStats
+                        });
                         cfg.SetConnection(new GrpcServerConnectionData { Port = setup.Port, Url = "127.0.0.1" });
                         cfg.AddService<ITestService>();
                         if(setup.EnableStatus)
