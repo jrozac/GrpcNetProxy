@@ -27,11 +27,6 @@ namespace GrpcNetProxy.Server
         internal GrpcStats Stats { get; }
 
         /// <summary>
-        /// Configuration
-        /// </summary>
-        private readonly GrpcServerConfiguration _cfg;
-
-        /// <summary>
         /// Service provider
         /// </summary>
         private readonly IServiceProvider _provider;
@@ -44,7 +39,12 @@ namespace GrpcNetProxy.Server
         /// <summary>
         /// Get host name
         /// </summary>
-        public string Name => _cfg?.Name;
+        public string Name => Configuration?.Name;
+
+        /// <summary>
+        /// Get configuration
+        /// </summary>
+        internal GrpcServerConfiguration Configuration { get; }
 
         /// <summary>
         /// Stats
@@ -63,7 +63,7 @@ namespace GrpcNetProxy.Server
         /// <param name="cfg"></param>
         internal GrpcHost(IServiceProvider provider, GrpcServerConfiguration cfg)
         {
-            _cfg = cfg;
+            Configuration = cfg;
             _provider = provider;
             if(cfg.Options.StatsEnabled)
             {
@@ -81,7 +81,7 @@ namespace GrpcNetProxy.Server
             _server?.ShutdownAsync().GetAwaiter().GetResult();
 
             // create server again
-            _server = GrpcServerBuilder.Build(_provider, _cfg);
+            _server = GrpcServerBuilder.Build(_provider, Configuration);
         }
 
         /// <summary>
@@ -112,8 +112,8 @@ namespace GrpcNetProxy.Server
         {
             var info = new GrpcServerInfo
             {
-                Name = _cfg?.Name,
-                Services = _cfg?.ServicesTypes.Select(t => t.Name).ToList(),
+                Name = Configuration?.Name,
+                Services = Configuration?.ServicesTypes.Select(t => t.Name).ToList(),
                 Connections = _server.Ports.Select(p => new GrpcServerInfo.ConnectionInfo {
                     Host = p.Host,
                     Port = p.BoundPort

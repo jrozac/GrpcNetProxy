@@ -36,7 +36,7 @@ namespace GrpcNetProxy.Server
         /// <returns></returns>
         public ServerConfigurator SetOnRequestStartAction(Action<ILogger, ServerCallContext, RequestStartData> onRequestStart)
         {
-            Configuration.OnRequestStart = onRequestStart;
+            Configuration.DataHandlers.OnRequestStart = onRequestStart;
             return this;
         }
 
@@ -47,7 +47,7 @@ namespace GrpcNetProxy.Server
         /// <returns></returns>
         public ServerConfigurator SetOnRequestEndAction(Action<ILogger, ServerCallContext, RequestEndData> onRequestEnd)
         {
-            Configuration.OnRequestEnd = onRequestEnd;
+            Configuration.DataHandlers.OnRequestEnd = onRequestEnd;
             return this;
         }
 
@@ -58,7 +58,7 @@ namespace GrpcNetProxy.Server
         /// <returns></returns>
         public ServerConfigurator SetContext(Action<string> contextSetter)
         {
-            Configuration.ContextSetter = contextSetter;
+            Configuration.DataHandlers.ContextSetter = contextSetter;
             return this;
         }
 
@@ -85,7 +85,7 @@ namespace GrpcNetProxy.Server
             var type = AppDomain.CurrentDomain.ResolveType(service);
             if (type == null || !type.IsInterface)
             {
-                throw new ArgumentException($"Service interface type {service} is not vaild.");
+                // throw new ArgumentException($"Service interface type {service} is not vaild.");
             }
 
             // add service

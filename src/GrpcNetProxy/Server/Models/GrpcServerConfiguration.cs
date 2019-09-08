@@ -18,6 +18,11 @@ namespace GrpcNetProxy.Server
         public string Name { get; set; } = "Default";
 
         /// <summary>
+        /// Data handlers
+        /// </summary>
+        internal GrpcServerDataHandlers DataHandlers { get; } = new GrpcServerDataHandlers();
+
+        /// <summary>
         /// Options
         /// </summary>
         public GrpcServerOptions Options { get; set; } = new GrpcServerOptions();
@@ -26,21 +31,6 @@ namespace GrpcNetProxy.Server
         /// Connection
         /// </summary>
         public GrpcServerConnectionData Connection { get; set; } = new GrpcServerConnectionData { Port = 5000, Url = "127.0.0.1" };
-
-        /// <summary>
-        /// On request start acttion
-        /// </summary>
-        public Action<ILogger, ServerCallContext, RequestStartData> OnRequestStart { get; set; }
-
-        /// <summary>
-        /// On request end action
-        /// </summary>
-        public Action<ILogger, ServerCallContext, RequestEndData> OnRequestEnd { get; set; }
-
-        /// <summary>
-        /// Context data setter
-        /// </summary>
-        public Action<string> ContextSetter { get; set; }
 
         /// <summary>
         /// Services interfaces types

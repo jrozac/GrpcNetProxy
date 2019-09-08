@@ -1,4 +1,5 @@
-﻿using GrpcNetProxy.Shared;
+﻿using Grpc.Core;
+using GrpcNetProxy.Shared;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -113,6 +114,16 @@ namespace GrpcNetProxy.Client
         public void DeactivateChannel(string channelId)
         {
             _channelManager.DeactivateChannel(channelId);
+        }
+
+        /// <summary>
+        /// Get raw channel
+        /// </summary>
+        /// <param name="channelId"></param>
+        /// <returns></returns>
+        public Channel GetRawChannel(string channelId)
+        {
+            return _channelManager.GetChannel(channelId)?.Channel;
         }
 
         /// <summary>

@@ -5,6 +5,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using GrpcNetProxy.Server;
 using System.Linq;
+using GrpcNetProxyTestApp;
+using GrpcNetProxyTestApp.Apl;
 
 namespace GrpcNetProxyTest.Setup
 {
@@ -26,6 +28,7 @@ namespace GrpcNetProxyTest.Setup
 
                 // register services
                 services.AddScoped<ITestService, ServerTestService>();
+                services.AddScoped<Greeter.GreeterBase, GreeterService>();
                 services.AddScoped<IStatusService, ServerStatusService>();
 
                 // setup servers
@@ -39,6 +42,7 @@ namespace GrpcNetProxyTest.Setup
                         });
                         cfg.SetConnection(new GrpcServerConnectionData { Port = setup.Port, Url = "127.0.0.1" });
                         cfg.AddService<ITestService>();
+                        cfg.AddService<Greeter.GreeterBase>();
                         if(setup.EnableStatus)
                         {
                             cfg.AddStatusService();

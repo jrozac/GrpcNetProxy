@@ -12,7 +12,8 @@
         "Port": 5001
       },
       "Services": [
-        "GrpcNetProxyTest.Apl.ITestService, GrpcNetProxyTest"
+        "GrpcNetProxyTest.Apl.ITestService, GrpcNetProxyTest",
+        "GrpcNetProxyTest.Greeter+GreeterBase, GrpcNetProxyTest"
       ]
     }
   ]

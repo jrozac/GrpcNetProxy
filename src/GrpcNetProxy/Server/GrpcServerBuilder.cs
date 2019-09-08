@@ -8,7 +8,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Linq.Expressions;
-using System.Diagnostics;
+using System.Collections.Generic;
 
 namespace GrpcNetProxy.Server
 {
@@ -30,24 +30,22 @@ namespace GrpcNetProxy.Server
             // get logger if needed
             var logger = (cfg.Options?.LogRequests ?? false) ? provider.GetService<ILoggerFactory>()?.CreateLogger("GrpcServerRequests") : null;
 
-            // create builder
-            var builder = ServerServiceDefinition.CreateBuilder();
+            // create services for interfaces
+            var interfacesServices = CreateServiceDefinitionForInterfaces(provider, cfg);
 
-            // get all methods to add to builder
-            var allMethods = cfg.ServicesTypes.SelectMany(type => type.GetMethods(BindingFlags.Public | BindingFlags.Instance)).ToList();
-
-            // setup methods 
-            allMethods.ForEach(m => RegisterServiceMethodToGrpc(m, provider, logger, builder, cfg));
-
-            // build services
-            var services = builder.Build();
+            // implemented services
+            var protoGenServices = CreateServicesDefinitionsForProtoGen(provider, cfg);
 
             // create grpc server 
             var server = new Grpc.Core.Server()
             {
                 Ports = { { cfg.Connection.Url, cfg.Connection.Port, ServerCredentials.Insecure } },
-                Services = { services }
+                Services = {}
             };
+
+            // add services to server
+            interfacesServices.ForEach(s => server.Services.Add(s));
+            protoGenServices.ForEach(s => server.Services.Add(s));
 
             // return server
             return server;
@@ -55,15 +53,77 @@ namespace GrpcNetProxy.Server
         }
 
         /// <summary>
+        /// Create services definitions for proto generated services
+        /// </summary>
+        /// <param name="provider"></param>
+        /// <param name="cfg"></param>
+        /// <returns></returns>
+        private static List<ServerServiceDefinition> CreateServicesDefinitionsForProtoGen(IServiceProvider provider,  GrpcServerConfiguration cfg)
+        {
+            // create definitions
+            var servicesImpl = cfg.ServicesTypes.Where(t => !t.IsInterface).Select(svcType =>
+            {
+
+                // get bind method from generated code 
+                var baseType = GrpcServerTypeBuilder.Build(svcType, cfg.Name);
+
+                // var baseType = svcType.BaseType;
+                var bind = (BindServiceMethodAttribute)baseType.GetCustomAttributes().First(a => a.GetType() == typeof(BindServiceMethodAttribute));
+                var bindMethod = bind.BindType.GetMethod(bind.BindMethodName, new Type[] { baseType });
+
+                // create service intstance and bind 
+                var svc = Activator.CreateInstance(baseType, new object[] { provider });
+                ServerServiceDefinition svcs = (ServerServiceDefinition)bindMethod.Invoke(null, new object[] { svc });
+                return svcs;
+
+            }).ToList();
+
+            // return
+            return servicesImpl;
+        }
+
+        /// <summary>
+        /// Get service definition for interfaces
+        /// </summary>
+        /// <param name="provider"></param>
+        /// <param name="cfg"></param>
+        /// <returns></returns>
+        private static List<ServerServiceDefinition> CreateServiceDefinitionForInterfaces(IServiceProvider provider, GrpcServerConfiguration cfg)
+        {
+           
+            // get types to create services for 
+            var servicesTypes = cfg.ServicesTypes
+                .Where(t => t.IsInterface && t.GetMethods(BindingFlags.Public | BindingFlags.Instance).Any());
+
+            // create services
+            var services = servicesTypes.Select(type => {
+
+                // create builder
+                var builder = ServerServiceDefinition.CreateBuilder();
+
+                // register methods 
+                var methods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance).ToList();
+                methods.ForEach(m => RegisterServiceMethodToGrpc(m, provider, builder, cfg));
+
+                // build interfaces services
+                var service = builder.Build();
+                return service;
+
+            }).ToList();
+
+            // return
+            return services;
+        }
+
+        /// <summary>
         /// Register service methods to grpc
         /// </summary>
         /// <param name="method"></param>
         /// <param name="provider"></param>
-        /// <param name="logger"></param>
         /// <param name="builder"></param>
         /// <param name="cfg"></param>
-        public static void RegisterServiceMethodToGrpc(MethodInfo method, IServiceProvider provider,
-            ILogger logger, ServerServiceDefinition.Builder builder, GrpcServerConfiguration cfg)
+        public static void RegisterServiceMethodToGrpc(MethodInfo method, IServiceProvider provider, 
+            ServerServiceDefinition.Builder builder, GrpcServerConfiguration cfg)
         {
 
             // get service data 
@@ -87,8 +147,7 @@ namespace GrpcNetProxy.Server
             // add method to services builder 
             var addMethodFnc = typeof(GrpcServerBuilder).GetMethod(nameof(GrpcServerBuilder.AddGrpcMethodToDefinitionBuilder)).
                 MakeGenericMethod(requestType, responseType, serviceType);
-            addMethodFnc.Invoke(null, new object[] { provider, logger, builder,
-                grpcMethod, grpcMethodHandler, cfg });
+            addMethodFnc.Invoke(null, new object[] { provider, builder, grpcMethod, grpcMethodHandler, cfg });
 
         }
 
@@ -120,13 +179,17 @@ namespace GrpcNetProxy.Server
         /// <typeparam name="TResponse"></typeparam>
         /// <typeparam name="TService"></typeparam>
         /// <param name="provider"></param>
-        /// <param name="logger"></param>
         /// <param name="builder"></param>
         /// <param name="method"></param>
         /// <param name="handler"></param>
         /// <param name="cfg"></param>
-        public static void AddGrpcMethodToDefinitionBuilder<TRequest, TResponse, TService>(IServiceProvider provider, ILogger logger, ServerServiceDefinition.Builder builder,
-            Method<TRequest, TResponse> method, Func<TService, TRequest, CancellationToken, Task<TResponse>> handler, GrpcServerConfiguration cfg)
+        public static void AddGrpcMethodToDefinitionBuilder<TRequest, TResponse, TService>(
+            IServiceProvider provider, 
+            ServerServiceDefinition.Builder builder,
+            Method<TRequest, TResponse> method, 
+            Func<TService, TRequest, CancellationToken, 
+            Task<TResponse>> handler, 
+            GrpcServerConfiguration cfg)
             where TService : class
             where TRequest : class
             where TResponse : class
@@ -134,99 +197,11 @@ namespace GrpcNetProxy.Server
 
             // get host stats 
             var stats = provider.GetServices<GrpcHost>().FirstOrDefault(h => h.Name == cfg.Name)?.Stats;
-            
+
             // add method 
-            builder.AddMethod(method, async (req, responseStream, context) =>
-            {
-                // start measure time 
-                var watch = Stopwatch.StartNew();
-
-                // get log context 
-                if (!string.IsNullOrEmpty(cfg.Options.ContextKey) && cfg.ContextSetter != null)
-                {
-                    // get context id 
-                    var contextId = Enumerable.Range(0, context.RequestHeaders.Count).Select(i => context.RequestHeaders[i]).
-                        FirstOrDefault(m => m.Key == cfg.Options.ContextKey)?.Value;
-                    if (!string.IsNullOrEmpty(contextId))
-                    {
-                        cfg.ContextSetter.Invoke(contextId);
-                    }
-                }
-
-                // log request start
-                if (logger != null)
-                {
-                    logger.LogInformation("Start for action {action} on host {host} with request {@request}.",
-                        $"{typeof(TService).Name}/{ method.Name}", cfg.Name, req);
-                }
-
-                // request start action
-                cfg.OnRequestStart?.Invoke(logger, context, new RequestStartData
-                {
-                    MethodName = method.Name,
-                    ServiceName = typeof(TService).Name,
-                    HostName = cfg.Name,
-                    Request = req
-                });
-
-                // add stats 
-                stats?.NewRequest(typeof(TService).Name, method.Name, context);
-
-                // execution inside new scope
-                Exception ex = null;
-                TResponse rsp = null;
-                using (var scope = provider.CreateScope())
-                {
-                    try
-                    {
-                        // invokation
-                        var svc = provider.GetRequiredService<TService>();
-                        var rspTask = handler(svc, req, context.CancellationToken);
-                        rsp = await rspTask;
-                        await responseStream.WriteAsync(rsp);
-                    }
-                    catch (Exception e)
-                    {
-                        // save error
-                        stats?.RequestError(typeof(TService).Name, method.Name, context, e.Message);
-                        ex = e;
-                        throw;
-                    }
-                    finally
-                    {
-
-                        // on end action ivoke
-                        cfg.OnRequestEnd?.Invoke(logger, context, new RequestEndData
-                        {
-                            MethodName = method.Name,
-                            ServiceName = typeof(TService).Name,
-                            HostName = cfg.Name,
-                            Request = req,
-                            DurationMs = watch.ElapsedMilliseconds,
-                            Exception = ex,
-                            Response = rsp
-                        });
-
-                        // stop time measurement
-                        watch.Stop();
-                        var duration = watch.ElapsedMilliseconds;
-
-                        // log end 
-                        if (ex != null)
-                        {
-                            logger.LogInformation(ex, "End for action {action} on host {host} with request {@request}, response {@response} and duration {duration}.",
-                                $"{typeof(TService).Name}/{method.Name}", cfg.Name, req, rsp, duration);
-                        }
-                        else
-                        {
-                            logger?.LogInformation("End for action {action} on host {host} with request {@request}, response {@response} and duration {duration}.",
-                                $"{typeof(TService).Name}/{method.Name}", cfg.Name, req, rsp, duration);
-                        }
-                    }
-
-                }
+            builder.AddMethod(method, async (req, responseStream, context) => {
+                await RequestHandler.HandleRequest<TRequest, TResponse, TService>(provider, req, handler, cfg.Name, method.Name, context, responseStream);
             });
-
         }
 
     }
