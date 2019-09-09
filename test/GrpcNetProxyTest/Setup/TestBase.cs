@@ -32,8 +32,7 @@ namespace GrpcNetProxyTest.Setup
             var scenario = new TScenario();
 
             // set server status back to true
-            scenario.GetServerHost().Services.GetServices<IStatusService>()
-                .Cast<ServerStatusService>().ToList().ForEach(s => s.Status = true);
+            ServerStatusService.Status = true;
 
             // reset all clients channels 
             scenario.ClientProvider.GetServices<GrpcClientManager>().ToList().ForEach(m => m.ResetChannels());

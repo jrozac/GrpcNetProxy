@@ -3,7 +3,6 @@ using GrpcNetProxy.Shared;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace GrpcNetProxy.Client
 {

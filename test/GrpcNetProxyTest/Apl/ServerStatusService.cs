@@ -14,7 +14,7 @@ namespace GrpcNetProxyTest.Apl
         /// <summary>
         /// Status value for test 
         /// </summary>
-        public bool Status { get; set; } = true;
+        public static bool Status { get; set; } = true;
 
         /// <summary>
         /// Check status 

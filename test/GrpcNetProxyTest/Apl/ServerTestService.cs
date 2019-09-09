@@ -9,6 +9,20 @@ namespace GrpcNetProxyTest.Apl
     /// </summary>
     public class ServerTestService : ITestService
     {
+
+        /// <summary>
+        /// Create constructor counter
+        /// </summary>
+        private static int _createCount;
+
+        /// <summary>
+        /// Constructor increments create count 
+        /// </summary>
+        public ServerTestService()
+        {
+            Interlocked.Increment(ref _createCount);
+        }
+
         /// <summary>
         /// Method success
         /// </summary>
@@ -17,7 +31,7 @@ namespace GrpcNetProxyTest.Apl
         /// <returns></returns>
         public Task<TestResponse> TestMethodSuccess(TestRequest request, CancellationToken token = default)
         {
-            return Task.FromResult(new TestResponse { Id = request.Id });
+            return Task.FromResult(new TestResponse { Id = request.Id, ConstructorInvokeCount = _createCount });
         }
 
         /// <summary>
@@ -28,6 +42,7 @@ namespace GrpcNetProxyTest.Apl
         /// <returns></returns>
         public Task<TestResponse> TestMethodThrow(TestRequest request, CancellationToken token = default)
         {
+            Interlocked.Exchange(ref _createCount, 0);
             throw new System.NotImplementedException();
         }
 
@@ -39,6 +54,7 @@ namespace GrpcNetProxyTest.Apl
         /// <returns></returns>
         public Task<TestResponse> TestMethodTimeout(TestRequest request, CancellationToken token = default)
         {
+            Interlocked.Exchange(ref _createCount, 0);
             Task.Delay(5 * 60 * 1000, token).GetAwaiter().GetResult();
             return Task.FromResult<TestResponse>(null);
         }

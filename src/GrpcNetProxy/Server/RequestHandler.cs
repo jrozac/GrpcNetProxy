@@ -55,7 +55,7 @@ namespace GrpcNetProxy.Server
         /// <typeparam name="TRequest"></typeparam>
         /// <typeparam name="TResponse"></typeparam>
         /// <typeparam name="TService"></typeparam>
-        /// <param name="provider"></param>
+        /// <param name="mainProvider"></param>
         /// <param name="req"></param>
         /// <param name="handler"></param>
         /// <param name="hostName"></param>
@@ -64,7 +64,7 @@ namespace GrpcNetProxy.Server
         /// <param name="onExectued"></param>
         /// <returns></returns>
         public static async Task<TResponse> HandleRequest<TRequest, TResponse, TService>(
-            IServiceProvider provider,
+            IServiceProvider mainProvider,
             TRequest req,
             Func<TService, TRequest, ServerCallContext, Task<TResponse>> handler,
             string hostName,
@@ -77,8 +77,10 @@ namespace GrpcNetProxy.Server
         {
 
             // run inside new scope
-            using (var scope = provider.CreateScope())
+            using (var scope = mainProvider.CreateScope())
             {
+                // get provider
+                var provider = scope.ServiceProvider;
 
                 // start measure time 
                 var watch = Stopwatch.StartNew();

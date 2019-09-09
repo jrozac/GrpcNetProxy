@@ -1,4 +1,5 @@
 ﻿using Grpc.Core;
+using GrpcNetProxyTest.Apl;
 using GrpcNetProxyTest.Scenarios;
 using GrpcNetProxyTest.Setup;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -27,8 +28,7 @@ namespace GrpcNetProxyTest
                 Assert.IsTrue(chStatus.IsAplOnline);
 
                 // server set status to false
-                var statusSvc = scenario.GetServerStatusService();
-                statusSvc.Status = false;
+                ServerStatusService.Status = false;
                 ExecuteServiceStatusCheck(scenario, false);
 
                 // verify channel is offfline
@@ -46,8 +46,7 @@ namespace GrpcNetProxyTest
             using (var scenario = Setup())
             {
                 // server set status to false
-                var statusSvc = scenario.GetServerStatusService();
-                statusSvc.Status = false;
+                ServerStatusService.Status = false;
                 ExecuteServiceStatusCheck(scenario, false);
 
                 // verify channel is offfline
@@ -55,7 +54,7 @@ namespace GrpcNetProxyTest
                 Assert.IsFalse(chStatus.IsAplOnline);
 
                 // server set status to true
-                statusSvc.Status = true;
+                ServerStatusService.Status = true;
                 ExecuteServiceStatusCheck(scenario, true);
 
                 // verify channel is online

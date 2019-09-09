@@ -77,15 +77,5 @@ namespace GrpcNetProxyTest.Scenarios
         public static IServiceProvider GetClientProvider<TScenario>(this TScenario scenario)
             where TScenario : DefaultScenario 
             => scenario?.ClientProvider;
-
-        /// <summary>
-        /// Get server status service
-        /// </summary>
-        /// <param name="scenario"></param>
-        /// <returns></returns>
-        public static ServerStatusService GetServerStatusService<TScenario>(this TScenario scenario)
-            where TScenario : DefaultScenario
-            => (ServerStatusService)scenario.GetServerHost().Services.GetService<IStatusService>();
-
     }
 }
