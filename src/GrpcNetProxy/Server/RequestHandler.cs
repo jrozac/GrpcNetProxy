@@ -98,7 +98,7 @@ namespace GrpcNetProxy.Server
                 {
                     // get context id 
                     var contextId = Enumerable.Range(0, context.RequestHeaders.Count).Select(i => context.RequestHeaders[i]).
-                        FirstOrDefault(m => m.Key == cfg.Options.ContextKey)?.Value;
+                        FirstOrDefault(m => m.Key.Equals(cfg.Options.ContextKey, StringComparison.InvariantCultureIgnoreCase))?.Value;
                     if (!string.IsNullOrEmpty(contextId))
                     {
                         cfg.DataHandlers.ContextSetter.Invoke(contextId);

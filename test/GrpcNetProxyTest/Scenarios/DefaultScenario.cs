@@ -1,5 +1,5 @@
 ﻿using GrpcNetProxy.Client;
-using GrpcNetProxy.Shared;
+using GrpcNetProxy.Server;
 using GrpcNetProxyTest.Setup;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -60,12 +60,12 @@ namespace GrpcNetProxyTest.Scenarios
 
             // server start 
             var serverSetups = GetServersSetup();
-            _host = ServerSetupUtil.CreateHost(serverSetups);
+            _host = ServerSetupUtil.CreateHost(ServerCustomSetup, serverSetups);
             _host.RunAsync();
 
             // client
             var clientSetups = GetClientsSetups();
-            ClientProvider = ClientSetupUtil.CreateProvider(clientSetups);
+            ClientProvider = ClientSetupUtil.CreateProvider(ClientCustomSetup, clientSetups);
             var chStatus = ClientProvider.GetRequiredService<GrpcClientManager>().GetChannelsStatus();
             Assert.IsNotNull(chStatus);
         }
@@ -94,6 +94,16 @@ namespace GrpcNetProxyTest.Scenarios
             var setups = Enumerable.Range(Port, 1).Select(p => new ClientSetup { EnableStatus = EnableStatusService, Ports = new int[] { p }, Name = $"GrpcClient_{p}" });
             return setups.ToArray();
         }
+
+        /// <summary>
+        /// Server custom setup
+        /// </summary>
+        public virtual Action<string, ServerConfigurator> ServerCustomSetup => null;
+
+        /// <summary>
+        /// Client custom setup
+        /// </summary>
+        public virtual Action<string, ClientConfigurator> ClientCustomSetup => null;
 
         /// <summary>
         /// Dispose

@@ -19,7 +19,7 @@ namespace GrpcNetProxyTest.Setup
         /// </summary>
         /// <param name="setups"></param>
         /// <returns></returns>
-        public static IServiceProvider CreateProvider(params ClientSetup[] setups)
+        public static IServiceProvider CreateProvider(Action<string, ClientConfigurator> customSetup, params ClientSetup[] setups)
         {
 
             // init collection
@@ -61,6 +61,9 @@ namespace GrpcNetProxyTest.Setup
                         TimeoutMs = setup.TimeoutMs
                     };
                     cfg.SetClientOptions(opts);
+
+                    // custom setup 
+                    customSetup?.Invoke(setup.Name, cfg);
 
                 });
 

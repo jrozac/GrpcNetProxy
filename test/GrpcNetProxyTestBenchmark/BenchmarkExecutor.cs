@@ -138,7 +138,7 @@ namespace GrpcNetProxyTestBenchmark
                     Name = $"Server_{_port + i}",
                     Port = _port + i
                 }).ToArray();
-            _host = ServerSetupUtil.CreateHost(serverSetups);
+            _host = ServerSetupUtil.CreateHost(null, serverSetups);
             _host.RunAsync();
         }
 
@@ -154,7 +154,7 @@ namespace GrpcNetProxyTestBenchmark
                 TimeoutMs = 1000,
                 Ports = Enumerable.Range(0, _serverCount).Select(i => _port + i).ToArray()
             };
-            _clientServices = ClientSetupUtil.CreateProvider(clientSetup);
+            _clientServices = ClientSetupUtil.CreateProvider(null, clientSetup);
 
         }
 

@@ -5,8 +5,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using GrpcNetProxy.Server;
 using System.Linq;
-using GrpcNetProxyTestApp;
 using GrpcNetProxyTestApp.Apl;
+using System;
 
 namespace GrpcNetProxyTest.Setup
 {
@@ -17,11 +17,14 @@ namespace GrpcNetProxyTest.Setup
     public static class ServerSetupUtil
     {
 
+    
         /// <summary>
-        /// Create host 
+        /// Create host
         /// </summary>
+        /// <param name="customConfiguration"></param>
+        /// <param name="setups"></param>
         /// <returns></returns>
-        public static IHost CreateHost(params ServerSetup[] setups)
+        public static IHost CreateHost(Action<string, ServerConfigurator> customConfiguration, params ServerSetup[] setups)
         {
             // host builder
             var serverHostBuilder = new HostBuilder().ConfigureServices((hostContext, services) => {
@@ -37,6 +40,7 @@ namespace GrpcNetProxyTest.Setup
                     // server setup
                     services.AddGrpcServer(cfg =>
                     {
+                        // setup 
                         cfg.SetOptions(new GrpcServerOptions {
                             StatsEnabled = setup.EnableStats
                         });
@@ -51,6 +55,10 @@ namespace GrpcNetProxyTest.Setup
                         {
                             cfg.SetName(setup.Name);
                         }
+
+                        // custom setup
+                        customConfiguration?.Invoke(setup.Name, cfg);
+
                     });
                     if (!string.IsNullOrWhiteSpace(setup.Name))
                     {
