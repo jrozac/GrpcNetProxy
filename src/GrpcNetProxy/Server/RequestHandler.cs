@@ -43,9 +43,28 @@ namespace GrpcNetProxy.Server
             where TResponse : class
             where TService : class
         {
+            // execute
             var rsp = await HandleRequest(provider, req, new Func<TService, TRequest, ServerCallContext, Task<TResponse>>(async (hsvc, hReq, hCtxt) => {
                 return await handler(hsvc, hReq, hCtxt.CancellationToken);
-            }), hostName, methodName, context, async (hRsp) => await streamWriter.WriteAsync(hRsp));
+            }), hostName, methodName, context);
+
+            // check if request was cancelled
+            if(context.CancellationToken.IsCancellationRequested)
+            {
+                return await Task.FromResult<TResponse>(null);
+            }
+
+            // write response to strem
+            try
+            {
+                await streamWriter.WriteAsync(rsp);
+            } catch(Exception)
+            {
+                // return
+                return await Task.FromResult<TResponse>(null);
+            }
+
+            // return 
             return rsp;
         }
 
@@ -61,7 +80,6 @@ namespace GrpcNetProxy.Server
         /// <param name="hostName"></param>
         /// <param name="methodName"></param>
         /// <param name="context"></param>
-        /// <param name="onExectued"></param>
         /// <returns></returns>
         public static async Task<TResponse> HandleRequest<TRequest, TResponse, TService>(
             IServiceProvider mainProvider,
@@ -69,8 +87,7 @@ namespace GrpcNetProxy.Server
             Func<TService, TRequest, ServerCallContext, Task<TResponse>> handler,
             string hostName,
             string methodName,
-            ServerCallContext context,
-            Action<TResponse> onExectued = null)
+            ServerCallContext context)
             where TRequest : class
             where TResponse : class
             where TService : class
@@ -130,9 +147,6 @@ namespace GrpcNetProxy.Server
                     var svc = provider.GetRequiredService<TService>();
                     var rspTask = handler(svc, req, context);
                     rsp = await rspTask;
-
-                    // on executed action
-                    onExectued?.Invoke(rsp);
 
                     // return
                     return rsp;
