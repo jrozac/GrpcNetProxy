@@ -7,6 +7,7 @@ using GrpcNetProxy.Server;
 using System.Linq;
 using GrpcNetProxyTestApp.Apl;
 using System;
+using GrpcNetProxy.Status;
 
 namespace GrpcNetProxyTest.Setup
 {

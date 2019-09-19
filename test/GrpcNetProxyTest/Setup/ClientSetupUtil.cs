@@ -31,12 +31,6 @@ namespace GrpcNetProxyTest.Setup
                 // add grpc client one
                 collection.AddGrpcClient(cfg => {
 
-                    // enable status 
-                    if(setup.EnableStatus)
-                    {
-                        cfg.EnableStatusService();
-                    }
-
                     // set name 
                     if (!string.IsNullOrWhiteSpace(setup.Name))
                     {
@@ -58,7 +52,8 @@ namespace GrpcNetProxyTest.Setup
                     // client options 
                     var opts = new GrpcClientOptions
                     {
-                        TimeoutMs = setup.TimeoutMs
+                        TimeoutMs = setup.TimeoutMs,
+                        StatusServiceEnabled = setup.EnableStatus
                     };
                     cfg.SetClientOptions(opts);
 

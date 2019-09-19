@@ -1,7 +1,7 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 
-namespace GrpcNetProxy.Shared
+namespace GrpcNetProxy.Status
 {
 
     /// <summary>

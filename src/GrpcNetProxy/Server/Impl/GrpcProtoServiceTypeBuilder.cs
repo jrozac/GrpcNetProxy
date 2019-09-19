@@ -1,4 +1,5 @@
 ﻿using Grpc.Core;
+using GrpcNetProxy.Generics;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -13,7 +14,7 @@ namespace GrpcNetProxy.Server
     /// <summary>
     /// Service type builder for services build from proto files
     /// </summary>
-    public class GrpcServerTypeBuilder
+    public class GrpcProtoServiceTypeBuilder
     {
 
         /// <summary>
@@ -42,7 +43,8 @@ namespace GrpcNetProxy.Server
             var typeBuilder = moduleBuilder.DefineType(serviceType.Name + "Server", TypeAttributes.Public, serviceType);
 
             // add interface 
-            ImplementServiceInterface(typeBuilder);
+            typeBuilder.AddInterfaceImplementation(typeof(IService));
+            typeBuilder.ImplementInterfaceProperties(typeof(IService));
 
             // add constructor
             AddConstructor(typeBuilder, cfgName);
@@ -54,56 +56,6 @@ namespace GrpcNetProxy.Server
             // build type and return
             var svcType = typeBuilder.CreateTypeInfo();
             return svcType;
-        }
-
-        /// <summary>
-        /// Add property to type builder
-        /// </summary>
-        /// <param name="typeBuilder"></param>
-        /// <param name="type"></param>
-        /// <param name="name"></param>
-        private static void AddProperty(TypeBuilder typeBuilder, Type type, string name)
-        {
-            // define property
-            var fieldBuilder = typeBuilder.DefineField("_" + name, type, FieldAttributes.Private);
-            var propertyBuilder = typeBuilder
-                .DefineProperty(name, PropertyAttributes.None, CallingConventions.HasThis, type, null);
-            var getSetAttr = MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.Virtual;
-
-            // getter
-            var getter = typeBuilder.DefineMethod("get_" + name, getSetAttr, type, Type.EmptyTypes);
-            var getIL = getter.GetILGenerator();
-            getIL.Emit(OpCodes.Ldarg_0);
-            getIL.Emit(OpCodes.Ldfld, fieldBuilder);
-            getIL.Emit(OpCodes.Ret);
-
-            // setter 
-            var setter = typeBuilder.DefineMethod("set_" + name, getSetAttr, null, new[] { type });
-            var setIL = setter.GetILGenerator();
-            setIL.Emit(OpCodes.Ldarg_0);
-            setIL.Emit(OpCodes.Ldarg_1);
-            setIL.Emit(OpCodes.Stfld, fieldBuilder);
-            setIL.Emit(OpCodes.Ret);
-
-            // add getter and setter methods
-            propertyBuilder.SetGetMethod(getter);
-            propertyBuilder.SetSetMethod(setter);
-        }
-
-        /// <summary>
-        /// Implement service inteface
-        /// </summary>
-        /// <param name="myTypeBuilder"></param>
-        private static void ImplementServiceInterface(TypeBuilder myTypeBuilder)
-        {
-
-            // add interface 
-            myTypeBuilder.AddInterfaceImplementation(typeof(IService));
-
-            // add required properties
-            AddProperty(myTypeBuilder, typeof(IServiceProvider), "ServiceProvider");
-            AddProperty(myTypeBuilder, typeof(Dictionary<string, Delegate>), "Invokers");
-            AddProperty(myTypeBuilder, typeof(string), "HostCfgName");
         }
 
         /// <summary>
@@ -131,7 +83,7 @@ namespace GrpcNetProxy.Server
             il.Emit(OpCodes.Ldstr, method.Key); // method name
 
             // set method to run
-            var callMethodTemplate = typeof(GrpcServerTypeBuilder).GetMethod(nameof(GrpcServerTypeBuilder.Execute), BindingFlags.Static | BindingFlags.Public);
+            var callMethodTemplate = typeof(GrpcProtoServiceTypeBuilder).GetMethod(nameof(GrpcProtoServiceTypeBuilder.Execute), BindingFlags.Static | BindingFlags.Public);
             var retType = method.Value.ReturnType.GenericTypeArguments.First();
             var reqType = method.Value.GetParameters().First().ParameterType;
             var callMethod = callMethodTemplate.MakeGenericMethod(reqType, retType, svcType);
@@ -160,8 +112,8 @@ namespace GrpcNetProxy.Server
             );
 
             // get method to be executed for constructor
-            var constructorMethod = typeof(GrpcServerTypeBuilder)
-                .GetMethod(nameof(GrpcServerTypeBuilder.Constructor), BindingFlags.Static | BindingFlags.Public);
+            var constructorMethod = typeof(GrpcProtoServiceTypeBuilder)
+                .GetMethod(nameof(GrpcProtoServiceTypeBuilder.Constructor), BindingFlags.Static | BindingFlags.Public);
 
             // set constructor
             var il = ctorBuilder.GetILGenerator();
@@ -193,6 +145,7 @@ namespace GrpcNetProxy.Server
         /// <param name="cfgName"></param>
         public static void Constructor(object _this, IServiceProvider serviceProvider, string cfgName)
         {
+            // get configuration
             var host = serviceProvider.GetServices<GrpcHost>().First(h => h.Name == cfgName);
             var cfg = host.Configuration;
 

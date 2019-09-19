@@ -103,7 +103,7 @@ namespace GrpcNetProxy.Client
         /// <summary>
         /// error threshold under limit
         /// </summary>
-        public bool ErrorsBelowThreshold => _errorCount < ConnectionData.ErrorThreshold;
+        public bool ErrorsBelowThreshold => _errorCount < Host.ErrorThreshold;
 
         /// <summary>
         /// Error count
@@ -135,7 +135,7 @@ namespace GrpcNetProxy.Client
         {
             Channel = channel;
             Invoker = invoker;
-            ConnectionData = connectionData;
+            Host = connectionData;
             Id = Guid.NewGuid().ToString("D");
         }
 
@@ -152,7 +152,7 @@ namespace GrpcNetProxy.Client
         /// <summary>
         /// Connection data
         /// </summary>
-        public GrpcChannelConnectionData ConnectionData { get; private set; }
+        public GrpcChannelConnectionData Host { get; private set; }
 
         /// <summary>
         /// Map invoker bundle to channel status
@@ -168,7 +168,7 @@ namespace GrpcNetProxy.Client
             IsActive = IsActive,
             IsAplOnline = IsAplOnline,
             State = Channel.State,
-            Options = ConnectionData
+            Host = Host
         };
 
     }

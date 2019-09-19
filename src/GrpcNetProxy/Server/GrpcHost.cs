@@ -1,11 +1,10 @@
 ﻿using GrpcNetProxy.Server.Models;
-using GrpcNetProxy.Shared;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using static GrpcNetProxy.Shared.GrpcStats;
+using static GrpcNetProxy.Server.GrpcStats;
 
 namespace GrpcNetProxy.Server
 {
@@ -115,7 +114,7 @@ namespace GrpcNetProxy.Server
                 Name = Configuration?.Name,
                 Services = Configuration?.ServicesTypes.Select(t => t.Name).ToList(),
                 Connections = _server.Ports.Select(p => new GrpcServerInfo.ConnectionInfo {
-                    Host = p.Host,
+                    Url = p.Host,
                     Port = p.BoundPort
                 }).ToList()
             };

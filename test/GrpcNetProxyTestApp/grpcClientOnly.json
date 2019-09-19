@@ -2,7 +2,6 @@
   "Clients": [
     {
       "Name": "Default",
-      "MonitorInterval": 60000,
       "Hosts": [
         {
           "Url": "127.0.0.1",
@@ -10,14 +9,16 @@
           "ErrorThreshold": 5
         }
       ],
-      "EnableStatusService": false,
       "Options": {
         "LogRequests": false,
         "ContextKey": "X-ContextId",
-        "TimeoutMs": 10000
+        "TimeoutMs": 10000,
+        "MonitorIntervalMs": 60000,
+        "EnableStatusService": false
       },
       "Services": [
-        "GrpcNetProxyTest.Apl.ITestService, GrpcNetProxyTest"
+        "GrpcNetProxyTest.Apl.ITestService, GrpcNetProxyTest",
+        "GrpcNetProxyTest.Greeter+GreeterClient, GrpcNetProxyTest"
       ]
     }
   ]

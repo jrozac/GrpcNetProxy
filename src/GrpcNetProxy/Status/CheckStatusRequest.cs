@@ -1,4 +1,4 @@
-﻿namespace GrpcNetProxy.Shared
+﻿namespace GrpcNetProxy.Status
 {
     /// <summary>
     /// Check status request

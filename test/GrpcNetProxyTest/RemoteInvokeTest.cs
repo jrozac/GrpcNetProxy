@@ -70,7 +70,7 @@ namespace GrpcNetProxyTest
                 });
 
                 // make sure it was cancelled
-                Assert.AreEqual(StatusCode.Cancelled, exc.StatusCode);
+                Assert.AreEqual(StatusCode.DeadlineExceeded, exc.StatusCode);
             }
 
         }

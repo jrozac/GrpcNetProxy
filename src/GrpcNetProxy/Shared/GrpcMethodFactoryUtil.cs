@@ -7,7 +7,7 @@ namespace GrpcNetProxy.Shared
     /// <summary>
     /// Setup utility generic
     /// </summary>
-    internal static class SharedSetupUtil
+    internal static class GrpcMethodFactoryUtil
     {
 
         /// <summary>

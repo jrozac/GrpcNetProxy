@@ -1,7 +1,4 @@
-﻿using Grpc.Core;
-using GrpcNetProxy.Shared;
-using Microsoft.Extensions.Logging;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace GrpcNetProxy.Server
@@ -30,7 +27,7 @@ namespace GrpcNetProxy.Server
         /// <summary>
         /// Connection
         /// </summary>
-        public GrpcServerConnectionData Connection { get; set; } = new GrpcServerConnectionData { Port = 5000, Url = "127.0.0.1" };
+        public GrpcServerConnectionData Host { get; set; } = new GrpcServerConnectionData { Port = 5000, Url = "127.0.0.1" };
 
         /// <summary>
         /// Services interfaces types

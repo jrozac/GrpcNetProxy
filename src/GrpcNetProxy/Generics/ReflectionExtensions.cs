@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
@@ -8,7 +9,7 @@ namespace GrpcNetProxy.Generics
     /// <summary>
     /// Application domain extensions
     /// </summary>
-    public static class AppDomainExtensions
+    public static class ReflectionExtensions
     {
 
         /// <summary>
@@ -47,7 +48,31 @@ namespace GrpcNetProxy.Generics
         public static Type ResolveType(this AppDomain domain, string assemblyQualifiedTypeName)
         {
             return Type.GetType(assemblyQualifiedTypeName, (name) => domain.GetOrLoadAssembly(name.FullName), null, true);
-        } 
+        }
+
+        /// <summary>
+        /// Get base classes
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public static IEnumerable<Type> GetInheritanceHierarchy
+            (this Type type)
+        {
+            for (var current = type; current != null; current = current.BaseType)
+            {
+                yield return current;
+            }
+        }
+
+        /// <summary>
+        /// Get declared methods for class
+        /// </summary>
+        /// <param name="classType"></param>
+        /// <returns></returns>
+        public static MethodInfo[] GetDeclaredMethods(this Type classType)
+        {
+            return classType.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+        }
 
     }
 }

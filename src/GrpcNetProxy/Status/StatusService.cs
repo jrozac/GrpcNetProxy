@@ -1,8 +1,7 @@
-﻿using GrpcNetProxy.Shared;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 
-namespace GrpcNetProxy.Server
+namespace GrpcNetProxy.Status
 {
     /// <summary>
     /// Service status implementatiton

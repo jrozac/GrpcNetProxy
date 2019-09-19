@@ -1,6 +1,4 @@
-﻿using GrpcNetProxy.Shared;
-using Microsoft.Extensions.Logging;
-using System;
+﻿using System.Collections.Generic;
 
 namespace GrpcNetProxy.Client
 {
@@ -19,27 +17,22 @@ namespace GrpcNetProxy.Client
         /// <summary>
         /// Client options 
         /// </summary>
-        public GrpcClientOptions ClientOptions { get; set; } = new GrpcClientOptions();
+        public GrpcClientOptions Options { get; set; } = new GrpcClientOptions();
 
         /// <summary>
-        /// On request start 
+        /// Data handlers
         /// </summary>
-        public Action<ILogger, RequestStartData> OnRequestStart { get; set; }
-
-        /// <summary>
-        /// On request end
-        /// </summary>
-        public Action<ILogger, RequestEndData> OnRequestEnd { get; set; }
-
-        /// <summary>
-        /// Context data getter
-        /// </summary>
-        public Func<string> ContextGetter { get; set; }
+        internal GrpcClientDataHandlers DataHandlers { get; } = new GrpcClientDataHandlers();
 
         /// <summary>
         /// Name
         /// </summary>
         public string Name { get; set; }
+
+        /// <summary>
+        /// Channels connections 
+        /// </summary>
+        public List<GrpcChannelConnectionData> Hosts = new List<GrpcChannelConnectionData>();
 
     }
 }

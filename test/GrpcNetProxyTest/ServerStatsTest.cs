@@ -5,7 +5,7 @@ using GrpcNetProxyTest.Setup;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
-using static GrpcNetProxy.Shared.GrpcStats;
+using static GrpcNetProxy.Server.GrpcStats;
 
 namespace GrpcNetProxyTest
 {

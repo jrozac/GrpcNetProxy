@@ -19,7 +19,7 @@ namespace GrpcNetProxy.Server.Models
         public class ConnectionInfo
         {
             internal ConnectionInfo() { }
-            public string Host { get; set; }
+            public string Url { get; set; }
             public int Port { get; set; }
         }
 

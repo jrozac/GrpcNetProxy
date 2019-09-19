@@ -1,6 +1,7 @@
 ﻿using Grpc.Core;
 using GrpcNetProxy.Generics;
 using GrpcNetProxy.Shared;
+using GrpcNetProxy.Status;
 using Microsoft.Extensions.Logging;
 using System;
 
@@ -113,7 +114,7 @@ namespace GrpcNetProxy.Server
         /// <returns></returns>
         public ServerConfigurator SetConnection(GrpcServerConnectionData host)
         {
-            Configuration.Connection = host;
+            Configuration.Host = host;
             return this;
         }
 

@@ -1,6 +1,8 @@
 ﻿using Grpc.Core;
 using GrpcNetProxy.Shared;
+using GrpcNetProxy.Status;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,14 +20,19 @@ namespace GrpcNetProxy.Client
     {
 
         /// <summary>
-        /// Channel manager
-        /// </summary>
-        private readonly GrpcChannelManager _channelManager;
-
-        /// <summary>
         /// Status service
         /// </summary>
         private readonly IStatusService _statusService;
+
+        /// <summary>
+        /// Call invoker
+        /// </summary>
+        private readonly ManagedCallInvoker _callInvoker;
+
+        /// <summary>
+        /// Client configuration
+        /// </summary>
+        private readonly GrpcClientConfiguration _clientConfiguration;
 
         /// <summary>
         /// Monitor timer
@@ -33,18 +40,24 @@ namespace GrpcNetProxy.Client
         private Timer _monitorTimer;
 
         /// <summary>
-        /// 
+        /// Constructor
         /// </summary>
-        /// <param name="channelManager"></param>
+        /// <param name="clientConfiguration"></param>
+        /// <param name="serviceProvider"></param>
         internal GrpcClientManager(GrpcClientConfiguration clientConfiguration, IServiceProvider serviceProvider)
         {
-            // resolve channel manager
-            _channelManager = serviceProvider.GetServices<GrpcChannelManager>().First(m => m.Name == clientConfiguration.Name);
+            // save cofniguration
+            _clientConfiguration = clientConfiguration;
+
+            // create call invoker
+            var logger = serviceProvider.GetService<ILoggerFactory>()?.CreateLogger("GrpcClientRequests");
+            _callInvoker = new ManagedCallInvoker(logger, clientConfiguration,
+                _clientConfiguration.Hosts, StatusServiceChannelCustomSelector);
 
             // create status service client if required
-            if (_channelManager.Configuration.StatusServiceEnabled)
+            if (_clientConfiguration.Options.StatusServiceEnabled)
             {
-                _statusService = CreateStatusService(clientConfiguration, serviceProvider);
+                _statusService = CreateStatusService(clientConfiguration, _callInvoker);
             }
 
             // reset channels
@@ -55,9 +68,15 @@ namespace GrpcNetProxy.Client
         }
 
         /// <summary>
+        /// Invoker getter
+        /// </summary>
+        /// <returns></returns>
+        internal CallInvoker GetInvoker() => _callInvoker;
+
+        /// <summary>
         /// Get name
         /// </summary>
-        public string Name => _channelManager.Name;
+        public string Name => _clientConfiguration?.Name;
 
         /// <summary>
         /// Gets channels ids for client
@@ -66,7 +85,7 @@ namespace GrpcNetProxy.Client
         /// <returns></returns>
         public string[] GetChannelsIdsForClient()
         {
-            return _channelManager.GetChannelsIds();
+            return _callInvoker.Invokers.Select(s => s.Id).ToArray();
         }
 
         /// <summary>
@@ -76,7 +95,7 @@ namespace GrpcNetProxy.Client
         /// <returns></returns>
         public GrpcChannelStatus GetChannelStatus(string channelId)
         {
-            var status = _channelManager.GetChannel(channelId).GetChannelStatus();
+            var status = GetChannelInvoker(channelId).GetChannelStatus();
             return status;
         }
 
@@ -86,7 +105,7 @@ namespace GrpcNetProxy.Client
         /// <returns></returns>
         public List<GrpcChannelStatus> GetChannelsStatus()
         {
-            return _channelManager.GetChannels().Select(c => c.GetChannelStatus()).ToList();
+            return _callInvoker.Invokers.Select(c => c.GetChannelStatus()).ToList();
         }
 
         /// <summary>
@@ -95,7 +114,22 @@ namespace GrpcNetProxy.Client
         /// <param name="channelId"></param>
         public void ResetChannel(string channelId)
         {
-            _channelManager.ResetChannel(channelId);
+            var ch = GetChannelInvoker(channelId);
+
+            // set aplication online depending of configuration
+            if (_clientConfiguration.Options.StatusServiceEnabled)
+            {
+                ch.SetAplOffline();
+            }
+            else
+            {
+                ch.SetAplOnline();
+            }
+
+            // reset error and activate channel
+            ch.ResetError();
+            ch.ResetInvokeCount();
+            ch.Activate();
         }
 
         /// <summary>
@@ -104,7 +138,7 @@ namespace GrpcNetProxy.Client
         /// <param name="channelId"></param>
         public void ActivateChannel(string channelId)
         {
-            _channelManager.ActivateChannel(channelId);
+            GetChannelInvoker(channelId).Activate();
         }
 
         /// <summary>
@@ -113,7 +147,7 @@ namespace GrpcNetProxy.Client
         /// <param name="channelId"></param>
         public void DeactivateChannel(string channelId)
         {
-            _channelManager.DeactivateChannel(channelId);
+            GetChannelInvoker(channelId).Deactivate();
         }
 
         /// <summary>
@@ -123,7 +157,7 @@ namespace GrpcNetProxy.Client
         /// <returns></returns>
         public Channel GetRawChannel(string channelId)
         {
-            return _channelManager.GetChannel(channelId)?.Channel;
+            return GetChannelInvoker(channelId).Channel;
         }
 
         /// <summary>
@@ -136,7 +170,7 @@ namespace GrpcNetProxy.Client
             // status service not supported
             if(_statusService == null)
             {
-                _channelManager.GetChannel(channelId).SetAplOnline();
+                GetChannelInvoker(channelId).SetAplOnline();
                 return await Task.FromResult<bool?>(null);
             }
 
@@ -158,10 +192,10 @@ namespace GrpcNetProxy.Client
             // set online/offline status
             if(remoteStatus)
             {
-                _channelManager.GetChannel(channelId).SetAplOnline();
+                GetChannelInvoker(channelId).SetAplOnline();
             } else
             {
-                _channelManager.GetChannel(channelId).SetAplOffline();
+                GetChannelInvoker(channelId).SetAplOffline();
             }
 
             // return 
@@ -173,9 +207,9 @@ namespace GrpcNetProxy.Client
         /// </summary>
         public void ResetChannels()
         {
-            var tasks = _channelManager.GetChannelsIds().Select(async chId => {
-                _channelManager.ResetChannel(chId);
-                 await GetChannelRemoteStatusValue(chId);
+            var tasks = GetChannelsIdsForClient().Select(async chId => {
+                ResetChannel(chId);
+                await GetChannelRemoteStatusValue(chId);
             });
 
             // wait to complete
@@ -183,23 +217,34 @@ namespace GrpcNetProxy.Client
         }
 
         /// <summary>
-        /// Get status service
+        /// Get channel invoker
         /// </summary>
-        /// <param name="clientName"></param>
+        /// <param name="id"></param>
         /// <returns></returns>
-        private IStatusService CreateStatusService(GrpcClientConfiguration clientConfiguration, IServiceProvider provider)
+        internal InvokerBundle GetChannelInvoker(string id)
+        {
+            var ch = _callInvoker.Invokers.FirstOrDefault(b => b.Id == id);
+            if (ch == null)
+            {
+                throw new ArgumentException("Channel id is invalid");
+            }
+            return ch;
+        }
+
+        /// <summary>
+        /// Create status service
+        /// </summary>
+        /// <param name="clientConfiguration"></param>
+        /// <param name="invoker"></param>
+        /// <returns></returns>
+        private IStatusService CreateStatusService(GrpcClientConfiguration clientConfiguration, CallInvoker invoker)
         {
             // get build method
-            var methodBuild = typeof(GrpcClientBuilder).
-                GetMethod(nameof(GrpcClientBuilder.Build), BindingFlags.Static | BindingFlags.NonPublic).MakeGenericMethod(typeof(IStatusService));
+            var methodBuild = typeof(GrpcClientFactoryUtil).
+                GetMethod(nameof(GrpcClientFactoryUtil.Create), BindingFlags.Static | BindingFlags.NonPublic).MakeGenericMethod(typeof(IStatusService));
 
             // create status service with custom invoker
-            var statusService = (IStatusService) methodBuild.Invoke(null, new object[] { provider, clientConfiguration });
-            ((GrpcClientBase)statusService).GetCustomInvokerForRequestDelegate = (manager, request, serviceName, methodName) =>
-            {
-                var channelId = ((CheckStatusRequest)request)?.ChannelId;
-                return channelId != null ? manager.GetChannel(channelId) : null;
-            };
+            var statusService = (IStatusService) methodBuild.Invoke(null, new object[] { invoker, clientConfiguration });
 
             // return 
             return statusService;
@@ -241,7 +286,7 @@ namespace GrpcNetProxy.Client
                     }
                 }
 
-            }, null, TimeSpan.FromSeconds(5), TimeSpan.FromMilliseconds(_channelManager.Configuration.MonitorInterval));
+            }, null, TimeSpan.FromSeconds(5), TimeSpan.FromMilliseconds(_clientConfiguration.Options.MonitorIntervalMs));
 
         }
 
@@ -251,7 +296,7 @@ namespace GrpcNetProxy.Client
         private void MonitorAction()
         {
             // process channels in separate tasks
-            var tasks = _channelManager.GetChannels().Select(async ch =>
+            var tasks = _callInvoker.Invokers.Select(async ch =>
             {
 
                 // do nothing if channel not active (manually disabled)
@@ -271,6 +316,23 @@ namespace GrpcNetProxy.Client
 
             // wait all tasks to complete
             Task.WaitAll(tasks);
+        }
+
+        /// <summary>
+        /// Custom channel selector used for status service
+        /// </summary>
+        /// <param name="request"></param>
+        /// <param name="serviceName"></param>
+        /// <param name="methodName"></param>
+        /// <returns></returns>
+        private string StatusServiceChannelCustomSelector(object request, string serviceName, string methodName)
+        {
+            if(_clientConfiguration.Options.StatusServiceEnabled && request is CheckStatusRequest)
+            {
+                var req = (CheckStatusRequest)request;
+                return !string.IsNullOrWhiteSpace(req.ChannelId) ? req.ChannelId : null;
+            }
+            return null;
         }
 
     }

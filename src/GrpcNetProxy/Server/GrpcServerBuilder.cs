@@ -39,7 +39,7 @@ namespace GrpcNetProxy.Server
             // create grpc server 
             var server = new Grpc.Core.Server()
             {
-                Ports = { { cfg.Connection.Url, cfg.Connection.Port, ServerCredentials.Insecure } },
+                Ports = { { cfg.Host.Url, cfg.Host.Port, ServerCredentials.Insecure } },
                 Services = {}
             };
 
@@ -65,7 +65,7 @@ namespace GrpcNetProxy.Server
             {
 
                 // get bind method from generated code 
-                var baseType = GrpcServerTypeBuilder.Build(svcType, cfg.Name);
+                var baseType = GrpcProtoServiceTypeBuilder.Build(svcType, cfg.Name);
 
                 // var baseType = svcType.BaseType;
                 var bind = (BindServiceMethodAttribute)baseType.GetCustomAttributes().First(a => a.GetType() == typeof(BindServiceMethodAttribute));
@@ -136,7 +136,7 @@ namespace GrpcNetProxy.Server
             var responseType = method.ReturnType.GenericTypeArguments[0];
 
             // create grpc method 
-            var grpcMethodFnc = typeof(SharedSetupUtil).GetMethod(nameof(SharedSetupUtil.CreateGrpcMethod)).MakeGenericMethod(requestType, responseType);
+            var grpcMethodFnc = typeof(GrpcMethodFactoryUtil).GetMethod(nameof(GrpcMethodFactoryUtil.CreateGrpcMethod)).MakeGenericMethod(requestType, responseType);
             var grpcMethod = grpcMethodFnc.Invoke(null, new object[] { serviceName, methodName });
 
             // create grpc method handler

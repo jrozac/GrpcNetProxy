@@ -69,7 +69,7 @@ namespace GrpcNetProxy.Client
 
             // no channel availalbe
             if(channel == null) {
-                throw new RpcException(new Status(StatusCode.Unavailable, "No channels available."));
+                throw new RpcException(new Grpc.Core.Status(StatusCode.Unavailable, "No channels available."));
             }
 
             // return

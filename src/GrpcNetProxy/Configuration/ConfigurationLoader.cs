@@ -106,17 +106,8 @@ namespace GrpcNetProxy.Configuration
                     builder.SetName(config.Name);
                 }
 
-                // set hosts health check interval 
-                builder.SetMonitorInterval(config.MonitorInterval);
-
                 // add hosts 
                 config.Hosts?.ForEach(host => builder.AddHost(host));
-
-                // enble status service
-                if (config.EnableStatusService)
-                {
-                    builder.EnableStatusService();
-                }
 
                 // set client options
                 if (config.Options != null)

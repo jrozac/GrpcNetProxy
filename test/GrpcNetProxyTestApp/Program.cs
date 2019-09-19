@@ -19,6 +19,7 @@ namespace GrpcNetProxyTestApp
     public class Program
     {
 
+
         /// <summary>
         /// Main program method
         /// </summary>
@@ -56,7 +57,7 @@ namespace GrpcNetProxyTestApp
             // call grpc usgin build proto client
             var chId = clientProvider.GetGrpcClientManager().GetChannelsIdsForClient().First();
             var channel = clientProvider.GetGrpcClientManager().GetRawChannel(chId);
-            var greeterClient = new GreeterClient(channel);
+            var greeterClient = clientProvider.GetService<GreeterClient>();
             var rsp2 = greeterClient.SayHello(new HelloRequest { Name = "ME" });
 
             // print result

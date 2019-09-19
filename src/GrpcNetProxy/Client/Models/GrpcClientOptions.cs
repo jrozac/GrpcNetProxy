@@ -21,5 +21,14 @@
         /// </summary>
         public int TimeoutMs { get; set; } = 10 * 1000;
 
+        /// <summary>
+        /// Monitor interval ms
+        /// </summary>
+        public int MonitorIntervalMs { get; set; } = 1 * 60 * 1000;
+
+        /// <summary>
+        /// Status service enabled
+        /// </summary>
+        public bool StatusServiceEnabled { get; set; }
     }
 }

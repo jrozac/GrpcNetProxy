@@ -1,4 +1,4 @@
-﻿using GrpcNetProxy.Shared;
+﻿using GrpcNetProxy.Status;
 using System.Threading;
 using System.Threading.Tasks;
 

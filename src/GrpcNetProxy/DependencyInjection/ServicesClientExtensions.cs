@@ -45,9 +45,6 @@ namespace GrpcNetProxy.DependencyInjection
             // apply configuration
             setup?.Invoke(configurator);
 
-            // add channels proxy
-            collection.AddSingleton(provider => new GrpcChannelManager(configurator.ClientConfiguration.Name, configurator.ChannelManagerConfiguration));
-
             // add client manager
             collection.AddSingleton(provider => new GrpcClientManager(configurator.ClientConfiguration, provider));
 
@@ -55,11 +52,14 @@ namespace GrpcNetProxy.DependencyInjection
             configurator.RegisteredServices.ForEach(svcType => {
 
                 // get build method
-                var methodBuild = typeof(GrpcClientBuilder).
-                    GetMethod(nameof(GrpcClientBuilder.Build), BindingFlags.Static | BindingFlags.NonPublic).MakeGenericMethod(svcType);
+                var methodBuild = typeof(GrpcClientFactoryUtil).
+                    GetMethod(nameof(GrpcClientFactoryUtil.Create), BindingFlags.Static | BindingFlags.NonPublic).MakeGenericMethod(svcType);
 
                 // add client
-                collection.AddSingleton(svcType, provider => methodBuild.Invoke(null, new object[] { provider, configurator.ClientConfiguration }));
+                collection.AddSingleton(svcType, provider => {
+                    var invoker = provider.GetServices<GrpcClientManager>().First(m => m.Name == configurator.ClientConfiguration.Name).GetInvoker();
+                    return methodBuild.Invoke(null, new object[] { invoker, configurator.ClientConfiguration });
+                });
             });
 
             // return 
@@ -88,7 +88,7 @@ namespace GrpcNetProxy.DependencyInjection
         public static TService GetGrpcClientService<TService>(this IServiceProvider provider, string name = "Default")
             where TService : class
         {
-            return provider.GetServices<TService>().First(m => (m as GrpcClientBase)?.Name == name);
+            return provider.GetServices<TService>().First(m => (m as IGrpcClient)?.Name == name);
         }
 
     }

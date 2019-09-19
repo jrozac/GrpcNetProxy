@@ -1,8 +1,10 @@
-﻿using GrpcNetProxy.Generics;
+﻿using Grpc.Core;
+using GrpcNetProxy.Generics;
 using GrpcNetProxy.Shared;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace GrpcNetProxy.Client
 {
@@ -12,34 +14,12 @@ namespace GrpcNetProxy.Client
     /// </summary>
     public class ClientConfigurator
     {
-
-        #region ChannelManager
-
-        /// <summary>
-        /// Channels proxy configuration
-        /// </summary>
-        internal GrpcChannelManagerConfiguration ChannelManagerConfiguration { get; private set; } = new GrpcChannelManagerConfiguration();
+        #region Setup
 
         /// <summary>
-        /// Enable status service
+        /// Client configuration
         /// </summary>
-        /// <returns></returns>
-        public ClientConfigurator EnableStatusService()
-        {
-            ChannelManagerConfiguration.StatusServiceEnabled = true;
-            return this;
-        }
-
-        /// <summary>
-        /// Set monitor interval in ms
-        /// </summary>
-        /// <param name="intervalMs"></param>
-        /// <returns></returns>
-        public ClientConfigurator SetMonitorInterval(int intervalMs)
-        {
-            ChannelManagerConfiguration.MonitorInterval = intervalMs;
-            return this;
-        }
+        internal GrpcClientConfiguration ClientConfiguration { get; set; } = new GrpcClientConfiguration();
 
         /// <summary>
         /// Add host 
@@ -48,20 +28,10 @@ namespace GrpcNetProxy.Client
         /// <returns></returns>
         public ClientConfigurator AddHost(GrpcChannelConnectionData options)
         {
-
             // add 
-            ChannelManagerConfiguration.ChannelsOptions.Add(options);
+            ClientConfiguration.Hosts.Add(options);
             return this;
         }
-
-        #endregion
-
-        #region Client
-
-        /// <summary>
-        /// Client configuration
-        /// </summary>
-        internal GrpcClientConfiguration ClientConfiguration { get; set; } = new GrpcClientConfiguration();
 
         /// <summary>
         /// Options set
@@ -70,7 +40,7 @@ namespace GrpcNetProxy.Client
         /// <returns></returns>
         public ClientConfigurator SetClientOptions(GrpcClientOptions options)
         {
-            ClientConfiguration.ClientOptions = options;
+            ClientConfiguration.Options = options;
             return this;
         }
 
@@ -81,7 +51,7 @@ namespace GrpcNetProxy.Client
         /// <returns></returns>
         public ClientConfigurator SetOnRequestStartAction(Action<ILogger, RequestStartData> onRequestStart)
         {
-            ClientConfiguration.OnRequestStart = onRequestStart;
+            ClientConfiguration.DataHandlers.OnRequestStart = onRequestStart;
             return this;
         }
 
@@ -92,7 +62,7 @@ namespace GrpcNetProxy.Client
         /// <returns></returns>
         public ClientConfigurator SetOnRequestEndAction(Action<ILogger, RequestEndData> onRequestEnd)
         {
-            ClientConfiguration.OnRequestEnd = onRequestEnd;
+            ClientConfiguration.DataHandlers.OnRequestEnd = onRequestEnd;
             return this;
         }
 
@@ -103,7 +73,7 @@ namespace GrpcNetProxy.Client
         /// <returns></returns>
         public ClientConfigurator SetContext(Func<string> contextGeter)
         {
-            ClientConfiguration.ContextGetter = contextGeter;
+            ClientConfiguration.DataHandlers.ContextGetter = contextGeter;
             return this;
         }
 
@@ -148,7 +118,7 @@ namespace GrpcNetProxy.Client
 
             // resolve type
             var type = AppDomain.CurrentDomain.ResolveType(service);
-            if(type == null || !type.IsInterface)
+            if(type == null || (!type.IsInterface && !type.GetInheritanceHierarchy().Any(t => t == typeof(ClientBase))))
             {
                 throw new ArgumentException($"Service interface type {service} is not vaild.");
             }

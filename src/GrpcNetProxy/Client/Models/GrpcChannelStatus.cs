@@ -16,7 +16,7 @@ namespace GrpcNetProxy.Client
         /// <summary>
         /// Channel options 
         /// </summary>
-        public GrpcChannelConnectionData Options {get;set;}
+        public GrpcChannelConnectionData Host { get;set;}
 
         /// <summary>
         /// Channel state
