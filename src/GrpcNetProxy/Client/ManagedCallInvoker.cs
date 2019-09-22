@@ -131,24 +131,27 @@ namespace GrpcNetProxy.Client
             // measure start
             var watch = Stopwatch.StartNew();
 
+            // get svc name
+            var svcName = method.ServiceName.Split('.').Last();
+
             // log start
             if (_configuration.Options.LogRequests && _logger != null)
             {
                 _logger.LogDebug("Start for action {action} on client {client} with request {@request}.",
-                    $"{method.ServiceName}/{method.Name}", _configuration.Name, request);
+                    $"{svcName}/{method.Name}", _configuration.Name, request);
             }
 
             // invoke start action
             _configuration.DataHandlers.OnRequestStart?.Invoke(_logger, new RequestStartData
             {
-                ServiceName = method.ServiceName,
+                ServiceName = svcName,
                 MethodName = method.Name,
                 HostName = _configuration.Name,
                 Request = request
             });
 
             // pick invoker (channel, round robin)
-            string invokerId = _channelCustomSelector?.Invoke(request, method.ServiceName, method.Name) ?? null;
+            string invokerId = _channelCustomSelector?.Invoke(request, svcName, method.Name) ?? null;
             var bundle = invokerId != null ? Invokers.FirstOrDefault(b => b.Id.Equals(invokerId, StringComparison.InvariantCultureIgnoreCase)) : null;
             bundle = bundle ?? _roundRobin.GetNext();
             var invoker = bundle.Invoker;
@@ -202,6 +205,9 @@ namespace GrpcNetProxy.Client
             watch.Stop();
             var duration = watch.ElapsedMilliseconds;
 
+            // get svc name
+            var svcName = method.ServiceName.Split('.').Last();
+
             // invoker status update 
             if (status == TaskStatus.RanToCompletion)
             {
@@ -218,12 +224,12 @@ namespace GrpcNetProxy.Client
                 if (status == TaskStatus.RanToCompletion)
                 {
                     _logger.LogInformation("End for action {action} on client {client}  with request {@request}, response {@response} and duration {duration}.",
-                        $"{method.ServiceName}/{method.Name}", _configuration.Name, request, t.Result, duration);
+                        $"{svcName}/{method.Name}", _configuration.Name, request, t.Result, duration);
                 }
                 else
                 {
                     _logger.LogError(t.Exception, "End for failed action {action} on client {client} with request {@request} and duration {duration}.",
-                        $"{method.ServiceName}/{method.Name}", _configuration.Name, request, duration);
+                        $"{svcName}/{method.Name}", _configuration.Name, request, duration);
                 }
             }
 
@@ -232,7 +238,7 @@ namespace GrpcNetProxy.Client
             {
                 _configuration.DataHandlers.OnRequestEnd?.Invoke(_logger, new RequestEndData
                 {
-                    ServiceName = method.ServiceName,
+                    ServiceName = svcName,
                     MethodName = method.Name,
                     HostName = _configuration.Name,
                     Request = request,

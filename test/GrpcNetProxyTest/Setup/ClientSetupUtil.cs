@@ -2,8 +2,10 @@
 using GrpcNetProxy.DependencyInjection;
 using GrpcNetProxyTest.Apl;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
+using static GrpcNetProxyTest.Setup.TestLoggerProvider;
 
 namespace GrpcNetProxyTest.Setup
 {
@@ -25,6 +27,11 @@ namespace GrpcNetProxyTest.Setup
             // init collection
             var collection = new ServiceCollection();
 
+            // add logging
+            var logSink = new TestLogSink();
+            collection.AddSingleton(logSink);
+            collection.AddLogging(cfg => cfg.AddProvider(new TestLoggerProvider(logSink)));
+
             // setup clients
             setups.ToList().ForEach(setup => {
 
@@ -39,6 +46,7 @@ namespace GrpcNetProxyTest.Setup
                     
                     // add services
                     cfg.AddService<ITestService>();
+                    cfg.AddService<Greeter.GreeterClient>();
 
                     // add channels
                     setup.Ports.ToList().ForEach(port => {
